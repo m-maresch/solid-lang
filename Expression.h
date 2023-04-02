@@ -4,11 +4,14 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include "Visitor.h"
 
 class Expression {
 
 public:
     virtual ~Expression() = default;
+
+    virtual void Accept(Visitor &visitor) = 0;
 };
 
 class VariableExpression : public Expression {
@@ -16,6 +19,12 @@ class VariableExpression : public Expression {
 
 public:
     VariableExpression(std::string Name) : Name(std::move(Name)) {}
+
+    void Accept(Visitor &visitor) override;
+
+    std::string GetName() {
+        return Name;
+    }
 };
 
 class FunctionCall : public Expression {
@@ -25,6 +34,16 @@ class FunctionCall : public Expression {
 public:
     FunctionCall(std::string Function, std::vector<std::unique_ptr<Expression>> Arguments)
             : Function(std::move(Function)), Arguments(std::move(Arguments)) {}
+
+    void Accept(Visitor &visitor) override;
+
+    std::string GetFunction() {
+        return Function;
+    }
+
+    std::vector<std::unique_ptr<Expression>> &GetArguments() {
+        return Arguments;
+    }
 };
 
 class FunctionDeclaration : public Expression {
@@ -34,6 +53,16 @@ class FunctionDeclaration : public Expression {
 public:
     FunctionDeclaration(std::string Function, std::vector<std::string> Arguments)
             : Function(std::move(Function)), Arguments(std::move(Arguments)) {}
+
+    void Accept(Visitor &visitor) override;
+
+    std::string GetFunction() {
+        return Function;
+    }
+
+    std::vector<std::string> GetArguments() {
+        return Arguments;
+    }
 };
 
 class FunctionDefinition : public Expression {
@@ -44,6 +73,16 @@ public:
     FunctionDefinition(std::unique_ptr<FunctionDeclaration> Declaration,
                        std::unique_ptr<Expression> Implementation)
             : Declaration(std::move(Declaration)), Implementation(std::move(Implementation)) {}
+
+    void Accept(Visitor &visitor) override;
+
+    FunctionDeclaration &GetDeclaration() {
+        return *Declaration;
+    }
+
+    Expression &GetImplementation() {
+        return *Implementation;
+    }
 };
 
 class BinaryExpression : public Expression {
@@ -54,6 +93,20 @@ class BinaryExpression : public Expression {
 public:
     BinaryExpression(char Operator, std::unique_ptr<Expression> LeftSide, std::unique_ptr<Expression> RightSide)
             : Operator(Operator), LeftSide(std::move(LeftSide)), RightSide(std::move(RightSide)) {}
+
+    void Accept(Visitor &visitor) override;
+
+    char GetOperator() {
+        return Operator;
+    }
+
+    Expression &GetLeftSide() {
+        return *LeftSide;
+    }
+
+    Expression &GetRightSide() {
+        return *RightSide;
+    }
 };
 
 class NumExpression : public Expression {
@@ -61,6 +114,12 @@ class NumExpression : public Expression {
 
 public:
     NumExpression(double Val) : Val(Val) {}
+
+    void Accept(Visitor &visitor) override;
+
+    double GetVal() {
+        return Val;
+    }
 };
 
 #endif

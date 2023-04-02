@@ -1,6 +1,6 @@
 #include "Lexer.h"
 
-bool isDigitCharacter(char input) {
+bool IsDigitCharacter(char input) {
     return isdigit(input) || input == '.';
 }
 
@@ -23,14 +23,14 @@ int Lexer::GetToken() {
         else return token_id;
     }
 
-    if (isDigitCharacter(LastChar)) {
+    if (IsDigitCharacter(LastChar)) {
         std::string Num;
         do {
             Num += (char) LastChar;
             LastChar = getchar();
-        } while (isDigitCharacter(LastChar));
+        } while (IsDigitCharacter(LastChar));
 
-        NumVal = (char) strtod(Num.c_str(), nullptr);
+        NumVal = strtod(Num.c_str(), nullptr);
         return token_num;
     }
 

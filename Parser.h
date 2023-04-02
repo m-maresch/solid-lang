@@ -9,7 +9,7 @@
 
 class Parser {
 public:
-    explicit Parser(std::shared_ptr<Lexer> Lexer) : Lexer(std::move(Lexer)) {}
+    explicit Parser(Lexer &Lexer) : Lexer(Lexer) {}
 
     std::unique_ptr<Expression> ParseExpression();
 
@@ -30,7 +30,7 @@ public:
     std::unique_ptr<FunctionDefinition> ParseTopLevelExpression();
 
 private:
-    std::shared_ptr<Lexer> Lexer;
+    Lexer &Lexer;
     std::map<char, int> BinaryOperatorPrecedences = {{'*', 40},
                                                      {'+', 20},
                                                      {'-', 20},

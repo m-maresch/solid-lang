@@ -8,7 +8,7 @@ std::unique_ptr<Expression> Parser::ParseExpression() {
 }
 
 std::unique_ptr<Expression> Parser::ParsePrimaryExpression() {
-    switch (Lexer->GetCurrentToken()) {
+    switch (Lexer.GetCurrentToken()) {
         case token_id:
             return ParseIdExpression();
         case token_num:
@@ -21,15 +21,15 @@ std::unique_ptr<Expression> Parser::ParsePrimaryExpression() {
 }
 
 std::unique_ptr<Expression> Parser::ParseIdExpression() {
-    auto Name = Lexer->GetIdVal();
-    Lexer->GetNextToken(); // consume id
+    auto Name = Lexer.GetIdVal();
+    Lexer.GetNextToken(); // consume id
 
-    if (Lexer->GetCurrentToken() != '(') // if it's not a function call then it's just a variable
+    if (Lexer.GetCurrentToken() != '(') // if it's not a function call then it's just a variable
         return std::make_unique<VariableExpression>(Name);
 
-    Lexer->GetNextToken(); // consume '(' of function call
+    Lexer.GetNextToken(); // consume '(' of function call
     std::vector<std::unique_ptr<Expression>> Arguments;
-    if (Lexer->GetCurrentToken() != ')') {
+    if (Lexer.GetCurrentToken() != ')') {
         while (true) {
             auto Argument = ParseExpression();
             if (Argument) {
@@ -38,41 +38,41 @@ std::unique_ptr<Expression> Parser::ParseIdExpression() {
                 return nullptr;
             }
 
-            if (Lexer->GetCurrentToken() == ')')
+            if (Lexer.GetCurrentToken() == ')')
                 break;
 
-            if (Lexer->GetCurrentToken() != ',')
+            if (Lexer.GetCurrentToken() != ',')
                 return LogError<Expression>("expected ')' or ','");
-            Lexer->GetNextToken(); // consume ','
+            Lexer.GetNextToken(); // consume ','
         }
     }
-    Lexer->GetNextToken(); // consume ')'
+    Lexer.GetNextToken(); // consume ')'
     return std::make_unique<FunctionCall>(Name, std::move(Arguments));
 }
 
 std::unique_ptr<Expression> Parser::ParseNumExpression() {
-    auto Num = std::make_unique<NumExpression>(Lexer->GetNumVal());
-    Lexer->GetNextToken();  // consume number
+    auto Num = std::make_unique<NumExpression>(Lexer.GetNumVal());
+    Lexer.GetNextToken();  // consume number
     return std::move(Num);
 }
 
 // parse: '(' expression ')'
 std::unique_ptr<Expression> Parser::ParseParenthesisExpression() {
-    Lexer->GetNextToken(); // consume '('
+    Lexer.GetNextToken(); // consume '('
     auto Value = ParseExpression();
     if (!Value)
         return nullptr;
-    if (Lexer->GetCurrentToken() != ')')
+    if (Lexer.GetCurrentToken() != ')')
         return LogError<Expression>("expected ')'");
-    Lexer->GetNextToken(); // consume ')'
+    Lexer.GetNextToken(); // consume ')'
     return Value;
 }
 
 int Parser::GetTokenPrecedence() {
-    if (!isascii(Lexer->GetCurrentToken()))
+    if (!isascii(Lexer.GetCurrentToken()))
         return -1;
 
-    int Precedence = BinaryOperatorPrecedences[(char) Lexer->GetCurrentToken()];
+    int Precedence = BinaryOperatorPrecedences[(char) Lexer.GetCurrentToken()];
     if (Precedence <= 0)
         return -1;
     return Precedence;
@@ -86,8 +86,8 @@ std::unique_ptr<Expression> Parser::ParseRightSideOfBinaryOperator(int Expressio
         if (TokenPrecedence < ExpressionPrecedence)
             return LeftSide;
 
-        int BinaryOperator = Lexer->GetCurrentToken();
-        Lexer->GetNextToken(); // consume binary operator
+        int BinaryOperator = Lexer.GetCurrentToken();
+        Lexer.GetNextToken(); // consume binary operator
 
         auto RightSide = ParsePrimaryExpression();
         if (!RightSide)
@@ -112,29 +112,29 @@ std::unique_ptr<Expression> Parser::ParseRightSideOfBinaryOperator(int Expressio
 }
 
 std::unique_ptr<FunctionDeclaration> Parser::ParseFunctionDeclaration() {
-    if (Lexer->GetCurrentToken() != token_id)
+    if (Lexer.GetCurrentToken() != token_id)
         return LogError<FunctionDeclaration>("expected function name in declaration");
 
-    auto Name = Lexer->GetIdVal();
-    Lexer->GetNextToken();
+    auto Name = Lexer.GetIdVal();
+    Lexer.GetNextToken();
 
-    if (Lexer->GetCurrentToken() != '(')
+    if (Lexer.GetCurrentToken() != '(')
         return LogError<FunctionDeclaration>("expected '('");
 
 
     std::vector<std::string> ArgumentNames;
-    while (Lexer->GetNextToken() == token_id)
-        ArgumentNames.push_back(Lexer->GetIdVal());
+    while (Lexer.GetNextToken() == token_id)
+        ArgumentNames.push_back(Lexer.GetIdVal());
 
-    if (Lexer->GetCurrentToken() != ')')
+    if (Lexer.GetCurrentToken() != ')')
         return LogError<FunctionDeclaration>("expected ')'");
 
-    Lexer->GetNextToken(); // consume ')'
+    Lexer.GetNextToken(); // consume ')'
     return std::make_unique<FunctionDeclaration>(Name, std::move(ArgumentNames));
 }
 
 std::unique_ptr<FunctionDefinition> Parser::ParseFunctionDefinition() {
-    Lexer->GetNextToken(); // consume 'func'
+    Lexer.GetNextToken(); // consume 'func'
     auto Declaration = ParseFunctionDeclaration();
     if (!Declaration)
         return nullptr;
@@ -147,7 +147,7 @@ std::unique_ptr<FunctionDefinition> Parser::ParseFunctionDefinition() {
 }
 
 std::unique_ptr<FunctionDeclaration> Parser::ParseExtern() {
-    Lexer->GetNextToken(); // consume 'extern'
+    Lexer.GetNextToken(); // consume 'extern'
     return ParseFunctionDeclaration();
 }
 
