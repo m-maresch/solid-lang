@@ -6,7 +6,7 @@
 enum Token {
     token_eof = -1,
     token_func = -2,
-    token_extern = -3,
+    token_native = -3,
     token_id = -4,
     token_num = -5,
 };

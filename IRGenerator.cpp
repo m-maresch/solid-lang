@@ -1,6 +1,22 @@
 #include <llvm/IR/Verifier.h>
+#include <llvm/IR/Function.h>
 #include "IRGenerator.h"
 #include "Expression.h"
+
+Function *IRGenerator::LookupFunction(std::string Name) {
+    auto *ModuleFunction = Module.getFunction(Name);
+    if (ModuleFunction) {
+        return ModuleFunction;
+    }
+
+    auto Declaration = FunctionDeclarations.find(Name);
+    if (Declaration != FunctionDeclarations.end()) {
+        Declaration->second->Accept(*this);
+        return static_cast<class Function *>(Current);
+    }
+
+    return nullptr;
+}
 
 void IRGenerator::Visit(VariableExpression &expression) {
     Value *Val = ValuesByName[expression.GetName()];
@@ -11,7 +27,7 @@ void IRGenerator::Visit(VariableExpression &expression) {
 }
 
 void IRGenerator::Visit(FunctionCall &expression) {
-    Function *Function = Module.getFunction(expression.GetFunction());
+    Function *Function = LookupFunction(expression.GetName());
     if (!Function) {
         LogError("Calling unknown function");
         return;
@@ -42,7 +58,7 @@ void IRGenerator::Visit(FunctionDeclaration &expression) {
 
     FunctionType *FuncType = FunctionType::get(Type::getDoubleTy(Context), Doubles, false);
 
-    Function *Func = Function::Create(FuncType, Function::ExternalLinkage, expression.GetFunction(), Module);
+    Function *Func = Function::Create(FuncType, Function::ExternalLinkage, expression.GetName(), Module);
 
     unsigned i = 0;
     for (auto &Argument: Func->args()) {
@@ -53,19 +69,13 @@ void IRGenerator::Visit(FunctionDeclaration &expression) {
 }
 
 void IRGenerator::Visit(FunctionDefinition &expression) {
-    Function *Func = Module.getFunction(expression.GetDeclaration().GetFunction());
+    auto Declaration = expression.TakeDeclaration();
+    auto Name = Declaration->GetName();
+    FunctionDeclarations[Name] = std::move(Declaration);
+    Function *Func = LookupFunction(Name);
 
     if (!Func) {
-        expression.GetDeclaration().Accept(*this);
-        Func = static_cast<Function *>(Current);
-        if (!Func) {
-            Current = nullptr;
-            return;
-        }
-    }
-
-    if (!Func->empty()) {
-        LogError("Attempted function redefinition");
+        Current = nullptr;
         return;
     }
 
@@ -82,6 +92,8 @@ void IRGenerator::Visit(FunctionDefinition &expression) {
         Builder.CreateRet(ReturnValue);
 
         verifyFunction(*Func);
+
+        PassManager.run(*Func);
 
         Current = Func;
         return;
@@ -124,6 +136,10 @@ void IRGenerator::Visit(BinaryExpression &expression) {
 
 void IRGenerator::Visit(NumExpression &expression) {
     Current = ConstantFP::get(Context, APFloat(expression.GetVal()));
+}
+
+void IRGenerator::Register(std::unique_ptr<FunctionDeclaration> Declaration) {
+    FunctionDeclarations[Declaration->GetName()] = std::move(Declaration);
 }
 
 void IRPrinter::Visit(VariableExpression &expression) {

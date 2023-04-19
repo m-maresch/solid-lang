@@ -146,8 +146,8 @@ std::unique_ptr<FunctionDefinition> Parser::ParseFunctionDefinition() {
     return std::make_unique<FunctionDefinition>(std::move(Declaration), std::move(Body));
 }
 
-std::unique_ptr<FunctionDeclaration> Parser::ParseExtern() {
-    Lexer.GetNextToken(); // consume 'extern'
+std::unique_ptr<FunctionDeclaration> Parser::ParseNative() {
+    Lexer.GetNextToken(); // consume 'native'
     return ParseFunctionDeclaration();
 }
 
@@ -156,6 +156,6 @@ std::unique_ptr<FunctionDefinition> Parser::ParseTopLevelExpression() {
     if (!Body)
         return nullptr;
 
-    auto Declaration = std::make_unique<FunctionDeclaration>("", std::vector<std::string>());
+    auto Declaration = std::make_unique<FunctionDeclaration>("__anonymous_top_level_expr", std::vector<std::string>());
     return std::make_unique<FunctionDefinition>(std::move(Declaration), std::move(Body));
 }

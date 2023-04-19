@@ -18,8 +18,8 @@ int Lexer::GetToken() {
 
         if (IdVal == "func")
             return token_func;
-        else if (IdVal == "extern")
-            return token_extern;
+        else if (IdVal == "native")
+            return token_native;
         else return token_id;
     }
 

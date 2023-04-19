@@ -25,7 +25,7 @@ public:
 
     std::unique_ptr<FunctionDefinition> ParseFunctionDefinition();
 
-    std::unique_ptr<FunctionDeclaration> ParseExtern();
+    std::unique_ptr<FunctionDeclaration> ParseNative();
 
     std::unique_ptr<FunctionDefinition> ParseTopLevelExpression();
 

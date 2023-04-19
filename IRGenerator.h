@@ -4,7 +4,9 @@
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
+#include <llvm/IR/LegacyPassManager.h>
 #include <map>
+#include <utility>
 
 #include "Visitor.h"
 
@@ -17,13 +19,22 @@ class IRGenerator : public Visitor {
 
     Module &Module;
 
-    std::map<std::string, Value *> ValuesByName;
+    legacy::FunctionPassManager &PassManager;
+
+    std::map<std::string, Value *> &ValuesByName;
+
+    std::map<std::string, std::unique_ptr<FunctionDeclaration>> &FunctionDeclarations;
 
     Value *Current;
 
+    Function *LookupFunction(std::string Name);
+
 public:
-    explicit IRGenerator(LLVMContext &Context, IRBuilder<> &Builder, class Module &Module)
-            : Context(Context), Builder(Builder), Module(Module) {}
+    explicit IRGenerator(LLVMContext &Context, IRBuilder<> &Builder, class Module &Module,
+                         legacy::FunctionPassManager &PassManager, std::map<std::string, Value *> &ValuesByName,
+                         std::map<std::string, std::unique_ptr<FunctionDeclaration>> &FunctionDeclarations)
+            : Context(Context), Builder(Builder), Module(Module), PassManager(PassManager), ValuesByName(ValuesByName),
+              FunctionDeclarations(FunctionDeclarations) {}
 
     void Visit(VariableExpression &expression) override;
 
@@ -44,6 +55,8 @@ public:
     void LogError(const char *Message) {
         fprintf(stderr, "Error: %s\n", Message);
     }
+
+    void Register(std::unique_ptr<FunctionDeclaration> Declaration);
 };
 
 class IRPrinter : public Visitor {

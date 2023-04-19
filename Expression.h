@@ -28,17 +28,17 @@ public:
 };
 
 class FunctionCall : public Expression {
-    std::string Function;
+    std::string Name;
     std::vector<std::unique_ptr<Expression>> Arguments;
 
 public:
-    FunctionCall(std::string Function, std::vector<std::unique_ptr<Expression>> Arguments)
-            : Function(std::move(Function)), Arguments(std::move(Arguments)) {}
+    FunctionCall(std::string Name, std::vector<std::unique_ptr<Expression>> Arguments)
+            : Name(std::move(Name)), Arguments(std::move(Arguments)) {}
 
     void Accept(Visitor &visitor) override;
 
-    std::string GetFunction() {
-        return Function;
+    std::string GetName() {
+        return Name;
     }
 
     std::vector<std::unique_ptr<Expression>> &GetArguments() {
@@ -47,17 +47,17 @@ public:
 };
 
 class FunctionDeclaration : public Expression {
-    std::string Function;
+    std::string Name;
     std::vector<std::string> Arguments;
 
 public:
-    FunctionDeclaration(std::string Function, std::vector<std::string> Arguments)
-            : Function(std::move(Function)), Arguments(std::move(Arguments)) {}
+    FunctionDeclaration(std::string Name, std::vector<std::string> Arguments)
+            : Name(std::move(Name)), Arguments(std::move(Arguments)) {}
 
     void Accept(Visitor &visitor) override;
 
-    std::string GetFunction() {
-        return Function;
+    std::string GetName() {
+        return Name;
     }
 
     std::vector<std::string> GetArguments() {
@@ -76,8 +76,8 @@ public:
 
     void Accept(Visitor &visitor) override;
 
-    FunctionDeclaration &GetDeclaration() {
-        return *Declaration;
+    std::unique_ptr<FunctionDeclaration> TakeDeclaration() {
+        return std::move(Declaration);
     }
 
     Expression &GetImplementation() {
