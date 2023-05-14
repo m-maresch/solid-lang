@@ -13,6 +13,10 @@ class BinaryExpression;
 
 class NumExpression;
 
+class ConditionalExpression;
+
+class LoopExpression;
+
 class Visitor {
 
 public:
@@ -29,6 +33,10 @@ public:
     virtual void Visit(BinaryExpression &expression) = 0;
 
     virtual void Visit(NumExpression &expression) = 0;
+
+    virtual void Visit(ConditionalExpression &expression) = 0;
+
+    virtual void Visit(LoopExpression &expression) = 0;
 };
 
 #endif

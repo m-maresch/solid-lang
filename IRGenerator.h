@@ -48,6 +48,10 @@ public:
 
     void Visit(NumExpression &expression) override;
 
+    void Visit(ConditionalExpression &expression) override;
+
+    void Visit(LoopExpression &expression) override;
+
     Value *GetValue() {
         return Current;
     }
@@ -83,6 +87,10 @@ public:
     void Visit(BinaryExpression &expression) override;
 
     void Visit(NumExpression &expression) override;
+
+    void Visit(ConditionalExpression &expression) override;
+
+    void Visit(LoopExpression &expression) override;
 };
 
 

@@ -4,11 +4,18 @@
 #include <string>
 
 enum Token {
-    token_eof = -1,
-    token_func = -2,
-    token_native = -3,
-    token_id = -4,
-    token_num = -5,
+    t_eof = -1,
+    t_func = -2,
+    t_native = -3,
+    t_id = -4,
+    t_num = -5,
+    t_when = -6,
+    t_then = -7,
+    t_otherwise = -8,
+    t_while = -9,
+    t_for = -10,
+    t_step = -11,
+    t_do = -12,
 };
 
 class Lexer {

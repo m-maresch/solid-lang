@@ -9,12 +9,16 @@ std::unique_ptr<Expression> Parser::ParseExpression() {
 
 std::unique_ptr<Expression> Parser::ParsePrimaryExpression() {
     switch (Lexer.GetCurrentToken()) {
-        case token_id:
+        case t_id:
             return ParseIdExpression();
-        case token_num:
+        case t_num:
             return ParseNumExpression();
         case '(':
             return ParseParenthesisExpression();
+        case t_when:
+            return ParseConditionalExpression();
+        case t_while:
+            return ParseLoopExpression();
         default:
             return LogError<Expression>("unknown token while parsing expression");
     }
@@ -68,6 +72,86 @@ std::unique_ptr<Expression> Parser::ParseParenthesisExpression() {
     return Value;
 }
 
+/// parse: 'when' expression 'then' expression 'otherwise' expression
+std::unique_ptr<Expression> Parser::ParseConditionalExpression() {
+    Lexer.GetNextToken(); // consume 'when'
+
+    auto Condition = ParseExpression();
+    if (!Condition) {
+        return nullptr;
+    }
+
+    if (Lexer.GetCurrentToken() != t_then)
+        return LogError<Expression>("expected 'then'");
+    Lexer.GetNextToken(); // consume 'then'
+
+    auto Then = ParseExpression();
+    if (!Then) {
+        return nullptr;
+    }
+
+    if (Lexer.GetCurrentToken() != t_otherwise)
+        return LogError<Expression>("expected 'otherwise'");
+    Lexer.GetNextToken(); // consume 'otherwise'
+
+    auto Otherwise = ParseExpression();
+    if (!Otherwise) {
+        return nullptr;
+    }
+
+    return std::make_unique<ConditionalExpression>(std::move(Condition), std::move(Then), std::move(Otherwise));
+}
+
+/// parse: 'while' expr 'for' id '=' expr ('step' expr)? 'do' expression
+std::unique_ptr<Expression> Parser::ParseLoopExpression() {
+    Lexer.GetNextToken(); // consume 'while'
+
+    auto While = ParseExpression();
+    if (!While) {
+        return nullptr;
+    }
+
+    if (Lexer.GetCurrentToken() != t_for)
+        return LogError<Expression>("expected 'for'");
+    Lexer.GetNextToken(); // consume 'for'
+
+    if (Lexer.GetCurrentToken() != t_id)
+        return LogError<Expression>("expected id");
+
+    std::string Name = Lexer.GetIdVal();
+    Lexer.GetNextToken(); // consume id
+
+    if (Lexer.GetCurrentToken() != '=')
+        return LogError<Expression>("expected '='");
+    Lexer.GetNextToken(); // consume '='
+
+    auto For = ParseExpression();
+    if (!For) {
+        return nullptr;
+    }
+
+    // optional step
+    std::unique_ptr<Expression> Step;
+    if (Lexer.GetCurrentToken() == t_step) {
+        Lexer.GetNextToken(); // consume 'step'
+        Step = ParseExpression();
+        if (!Step) {
+            return nullptr;
+        }
+    }
+
+    if (Lexer.GetCurrentToken() != t_do)
+        return LogError<Expression>("expected 'do'");
+    Lexer.GetNextToken(); // consume 'do'
+
+    auto Body = ParseExpression();
+    if (!Body) {
+        return nullptr;
+    }
+
+    return std::make_unique<LoopExpression>(Name, std::move(For), std::move(While), std::move(Step), std::move(Body));
+}
+
 int Parser::GetTokenPrecedence() {
     if (!isascii(Lexer.GetCurrentToken()))
         return -1;
@@ -112,7 +196,7 @@ std::unique_ptr<Expression> Parser::ParseRightSideOfBinaryOperator(int Expressio
 }
 
 std::unique_ptr<FunctionDeclaration> Parser::ParseFunctionDeclaration() {
-    if (Lexer.GetCurrentToken() != token_id)
+    if (Lexer.GetCurrentToken() != t_id)
         return LogError<FunctionDeclaration>("expected function name in declaration");
 
     auto Name = Lexer.GetIdVal();
@@ -123,7 +207,7 @@ std::unique_ptr<FunctionDeclaration> Parser::ParseFunctionDeclaration() {
 
 
     std::vector<std::string> ArgumentNames;
-    while (Lexer.GetNextToken() == token_id)
+    while (Lexer.GetNextToken() == t_id)
         ArgumentNames.push_back(Lexer.GetIdVal());
 
     if (Lexer.GetCurrentToken() != ')')

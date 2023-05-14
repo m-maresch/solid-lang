@@ -24,18 +24,18 @@ void SolidLang::ProcessInput() {
     while (!done) {
         fprintf(stderr, "ready> ");
         switch (Lexer->GetCurrentToken()) {
-            case token_eof:
+            case t_eof:
                 done = true;
                 break;
             case ';':
                 Lexer->GetNextToken();
                 break;
-            case token_func: {
+            case t_func: {
                 std::unique_ptr<Expression> Result = Parser->ParseFunctionDefinition();
                 HandleFunction(Result.get());
                 break;
             }
-            case token_native: {
+            case t_native: {
                 std::unique_ptr<FunctionDeclaration> Result = Parser->ParseNative();
                 HandleNative(std::move(Result));
                 break;

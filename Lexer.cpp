@@ -17,10 +17,24 @@ int Lexer::GetToken() {
         }
 
         if (IdVal == "func")
-            return token_func;
+            return t_func;
         else if (IdVal == "native")
-            return token_native;
-        else return token_id;
+            return t_native;
+        else if (IdVal == "when")
+            return t_when;
+        else if (IdVal == "then")
+            return t_then;
+        else if (IdVal == "otherwise")
+            return t_otherwise;
+        else if (IdVal == "while")
+            return t_while;
+        else if (IdVal == "for")
+            return t_for;
+        else if (IdVal == "step")
+            return t_step;
+        else if (IdVal == "do")
+            return t_do;
+        else return t_id;
     }
 
     if (IsDigitCharacter(LastChar)) {
@@ -31,7 +45,7 @@ int Lexer::GetToken() {
         } while (IsDigitCharacter(LastChar));
 
         NumVal = strtod(Num.c_str(), nullptr);
-        return token_num;
+        return t_num;
     }
 
     if (LastChar == '#') {
@@ -44,7 +58,7 @@ int Lexer::GetToken() {
     }
 
     if (LastChar == EOF)
-        return token_eof;
+        return t_eof;
 
     int Current = LastChar;
     LastChar = getchar();

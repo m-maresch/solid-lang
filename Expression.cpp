@@ -23,3 +23,11 @@ void BinaryExpression::Accept(Visitor &visitor) {
 void NumExpression::Accept(Visitor &visitor) {
     visitor.Visit(*this);
 }
+
+void ConditionalExpression::Accept(Visitor &visitor) {
+    visitor.Visit(*this);
+}
+
+void LoopExpression::Accept(Visitor &visitor) {
+    visitor.Visit(*this);
+}

@@ -5,6 +5,8 @@ extern "C" {
 
 double print(double num);
 
+double printc(double num);
+
 }
 
 #endif

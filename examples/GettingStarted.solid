@@ -1,0 +1,12 @@
+func fib(x)
+  when x < 3 then 1
+  otherwise fib(x-1) + fib(x-2);
+
+fib(10);
+
+native printc(x);
+func printstars(n)
+  while i < n for i = 1 step 1 do
+    printc(42); # 42 = '*'
+
+printstars(100);
