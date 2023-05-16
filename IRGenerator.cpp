@@ -103,6 +103,24 @@ void IRGenerator::Visit(FunctionDefinition &expression) {
     Current = nullptr;
 }
 
+void IRGenerator::Visit(UnaryExpression &expression) {
+    expression.GetOperand().Accept(*this);
+    Value *Operand = Current;
+    if (!Operand) {
+        Current = nullptr;
+        return;
+    }
+
+    Function *Func = LookupFunction(std::string("unary") + expression.GetOperator());
+    if (!Func){
+        LogError("Unknown unary operator");
+        Current = nullptr;
+        return;
+    }
+
+    Current = Builder.CreateCall(Func, Operand, "unop");
+}
+
 void IRGenerator::Visit(BinaryExpression &expression) {
     expression.GetLeftSide().Accept(*this);
     Value *LeftSide = Current;
@@ -129,9 +147,19 @@ void IRGenerator::Visit(BinaryExpression &expression) {
             Current = Builder.CreateUIToFP(LeftSide, Type::getDoubleTy(Context), "booltmp");
             return;
         default:
-            LogError("Binary operator invalid");
-            return;
+            break;
     }
+
+    Function *Func = LookupFunction(std::string("binary") + expression.GetOperator());
+    if (!Func) {
+        LogError("Unknown binary operator");
+        Current = nullptr;
+        return;
+    }
+
+    Value *Args[] = {LeftSide, RightSide};
+
+    Current = Builder.CreateCall(Func, Args, "binop");
 }
 
 void IRGenerator::Visit(NumExpression &expression) {
@@ -294,6 +322,11 @@ void IRPrinter::Visit(FunctionDeclaration &expression) {
 }
 
 void IRPrinter::Visit(FunctionDefinition &expression) {
+    IRGenerator.Visit(expression);
+    Print();
+}
+
+void IRPrinter::Visit(UnaryExpression &expression) {
     IRGenerator.Visit(expression);
     Print();
 }

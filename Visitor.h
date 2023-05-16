@@ -9,6 +9,8 @@ class FunctionDeclaration;
 
 class FunctionDefinition;
 
+class UnaryExpression;
+
 class BinaryExpression;
 
 class NumExpression;
@@ -29,6 +31,8 @@ public:
     virtual void Visit(FunctionDeclaration &expression) = 0;
 
     virtual void Visit(FunctionDefinition &expression) = 0;
+
+    virtual void Visit(UnaryExpression &expression) = 0;
 
     virtual void Visit(BinaryExpression &expression) = 0;
 

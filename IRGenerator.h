@@ -44,6 +44,8 @@ public:
 
     void Visit(FunctionDefinition &expression) override;
 
+    void Visit(UnaryExpression &expression) override;
+
     void Visit(BinaryExpression &expression) override;
 
     void Visit(NumExpression &expression) override;
@@ -83,6 +85,8 @@ public:
     void Visit(FunctionDeclaration &expression) override;
 
     void Visit(FunctionDefinition &expression) override;
+
+    void Visit(UnaryExpression &expression) override;
 
     void Visit(BinaryExpression &expression) override;
 

@@ -30,7 +30,8 @@ void SolidLang::ProcessInput() {
             case ';':
                 Lexer->GetNextToken();
                 break;
-            case t_func: {
+            case t_func:
+            case t_operator: {
                 std::unique_ptr<Expression> Result = Parser->ParseFunctionDefinition();
                 HandleFunction(Result.get());
                 break;

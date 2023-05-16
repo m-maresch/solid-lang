@@ -16,6 +16,9 @@ enum Token {
     t_for = -10,
     t_step = -11,
     t_do = -12,
+    t_unary = -13,
+    t_binary = -14,
+    t_operator = -15,
 };
 
 class Lexer {

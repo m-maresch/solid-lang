@@ -34,6 +34,12 @@ int Lexer::GetToken() {
             return t_step;
         else if (IdVal == "do")
             return t_do;
+        else if (IdVal == "unary")
+            return t_unary;
+        else if (IdVal == "binary")
+            return t_binary;
+        else if (IdVal == "operator")
+            return t_operator;
         else return t_id;
     }
 

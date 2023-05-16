@@ -16,6 +16,10 @@ void FunctionDefinition::Accept(Visitor &visitor) {
     visitor.Visit(*this);
 }
 
+void UnaryExpression::Accept(Visitor &visitor) {
+    visitor.Visit(*this);
+}
+
 void BinaryExpression::Accept(Visitor &visitor) {
     visitor.Visit(*this);
 }

@@ -1,7 +1,7 @@
 #include "Parser.h"
 
 std::unique_ptr<Expression> Parser::ParseExpression() {
-    auto LeftSide = ParsePrimaryExpression();
+    auto LeftSide = ParseUnaryExpression();
     if (!LeftSide)
         return nullptr;
     return ParseRightSideOfBinaryOperator(0, std::move(LeftSide));
@@ -70,6 +70,19 @@ std::unique_ptr<Expression> Parser::ParseParenthesisExpression() {
         return LogError<Expression>("expected ')'");
     Lexer.GetNextToken(); // consume ')'
     return Value;
+}
+
+std::unique_ptr<Expression> Parser::ParseUnaryExpression() {
+    int CurrentToken = Lexer.GetCurrentToken();
+    if (CurrentToken == '(' || CurrentToken == ',' || !isascii(CurrentToken)) {
+        return ParsePrimaryExpression();
+    }
+
+    int Operator = CurrentToken;
+    Lexer.GetNextToken(); // consume operator
+    if (auto Operand = ParseUnaryExpression())
+        return std::make_unique<UnaryExpression>(Operator, std::move(Operand));
+    return nullptr;
 }
 
 /// parse: 'when' expression 'then' expression 'otherwise' expression
@@ -173,7 +186,7 @@ std::unique_ptr<Expression> Parser::ParseRightSideOfBinaryOperator(int Expressio
         int BinaryOperator = Lexer.GetCurrentToken();
         Lexer.GetNextToken(); // consume binary operator
 
-        auto RightSide = ParsePrimaryExpression();
+        auto RightSide = ParseUnaryExpression();
         if (!RightSide)
             return nullptr;
 
@@ -196,15 +209,59 @@ std::unique_ptr<Expression> Parser::ParseRightSideOfBinaryOperator(int Expressio
 }
 
 std::unique_ptr<FunctionDeclaration> Parser::ParseFunctionDeclaration() {
-    if (Lexer.GetCurrentToken() != t_id)
-        return LogError<FunctionDeclaration>("expected function name in declaration");
+    std::string Name;
+    int Type; // 0 = id, 1 = unary, 2 = binary
 
-    auto Name = Lexer.GetIdVal();
-    Lexer.GetNextToken();
+    switch (Lexer.GetCurrentToken()) {
+        default:
+            return LogError<FunctionDeclaration>("expected function name in declaration");
+        case t_id:
+            Name = Lexer.GetIdVal();
+            Type = 0;
+
+            Lexer.GetNextToken(); // consume id
+            break;
+        case t_unary:
+            Lexer.GetNextToken(); // consume 'unary'
+
+            if (!isascii(Lexer.GetCurrentToken()))
+                return LogError<FunctionDeclaration>("expected unary operator");
+
+            Name = std::string("unary") + ((char) Lexer.GetCurrentToken());
+            Type = 1;
+
+            Lexer.GetNextToken(); // consume operator symbol
+            break;
+        case t_binary:
+            Lexer.GetNextToken(); // consume 'binary'
+
+            if (!isascii(Lexer.GetCurrentToken()))
+                return LogError<FunctionDeclaration>("expected binary operator");
+
+            char Operator = (char) Lexer.GetCurrentToken();
+            Name = std::string("binary") + Operator;
+            Type = 2;
+            int Precedence = 30;
+
+            Lexer.GetNextToken(); // consume operator symbol
+
+            // optional operator precedence
+            if (Lexer.GetCurrentToken() == t_num) {
+                double Num = Lexer.GetNumVal();
+                if (Num > 100 || Num < 1)
+                    return LogError<FunctionDeclaration>("Precedence must be in range 1..100");
+
+                Precedence = (int) Num;
+
+                Lexer.GetNextToken(); // consume operator precedence
+            }
+
+            BinaryOperatorPrecedences[Operator] = Precedence;
+            break;
+    }
 
     if (Lexer.GetCurrentToken() != '(')
         return LogError<FunctionDeclaration>("expected '('");
-
 
     std::vector<std::string> ArgumentNames;
     while (Lexer.GetNextToken() == t_id)
@@ -214,11 +271,15 @@ std::unique_ptr<FunctionDeclaration> Parser::ParseFunctionDeclaration() {
         return LogError<FunctionDeclaration>("expected ')'");
 
     Lexer.GetNextToken(); // consume ')'
+
+    if ((Type == 1 && ArgumentNames.size() != 1) || (Type == 2 && ArgumentNames.size() != 2))
+        return LogError<FunctionDeclaration>("invalid number of operands for unary/binary operator");
+
     return std::make_unique<FunctionDeclaration>(Name, std::move(ArgumentNames));
 }
 
 std::unique_ptr<FunctionDefinition> Parser::ParseFunctionDefinition() {
-    Lexer.GetNextToken(); // consume 'func'
+    Lexer.GetNextToken(); // consume 'func'/'operator'
     auto Declaration = ParseFunctionDeclaration();
     if (!Declaration)
         return nullptr;

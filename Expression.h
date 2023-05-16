@@ -85,6 +85,25 @@ public:
     }
 };
 
+class UnaryExpression : public Expression {
+    char Operator;
+    std::unique_ptr<Expression> Operand;
+
+public:
+    UnaryExpression(char Operator, std::unique_ptr<Expression> Operand)
+            : Operator(Operator), Operand(std::move(Operand)) {}
+
+    void Accept(Visitor &visitor) override;
+
+    char GetOperator() {
+        return Operator;
+    }
+
+    Expression &GetOperand() {
+        return *Operand;
+    }
+};
+
 class BinaryExpression : public Expression {
     char Operator;
     std::unique_ptr<Expression> LeftSide;

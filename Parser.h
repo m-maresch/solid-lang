@@ -21,6 +21,8 @@ public:
 
     std::unique_ptr<Expression> ParseParenthesisExpression();
 
+    std::unique_ptr<Expression> ParseUnaryExpression();
+
     std::unique_ptr<Expression> ParseConditionalExpression();
 
     std::unique_ptr<Expression> ParseLoopExpression();
