@@ -18,12 +18,62 @@ Function *IRGenerator::LookupFunction(std::string Name) {
     return nullptr;
 }
 
+AllocaInst *IRGenerator::CreateAlloca(Function *Func, StringRef Name) {
+    IRBuilder<> TmpBuilder(&Func->getEntryBlock(), Func->getEntryBlock().begin());
+    return TmpBuilder.CreateAlloca(Type::getDoubleTy(Context), nullptr, Name);
+}
+
 void IRGenerator::Visit(VariableExpression &expression) {
-    Value *Val = ValuesByName[expression.GetName()];
-    if (!Val) {
+    AllocaInst *Alloca = ValuesByName[expression.GetName()];
+    if (!Alloca) {
         LogError("Variable unknown");
     }
-    Current = Val;
+
+    Current = Builder.CreateLoad(Alloca->getAllocatedType(), Alloca, expression.GetName().c_str());
+}
+
+void IRGenerator::Visit(VariableDefinition &expression) {
+    std::vector<AllocaInst *> OriginalValues;
+    Function *Func = Builder.GetInsertBlock()->getParent();
+
+    for (auto &Variable: expression.GetVariables()) {
+        const std::string &VariableName = Variable.first;
+        Expression *VariableInitializer = Variable.second.get();
+
+        Value *Initializer;
+        if (VariableInitializer) {
+            VariableInitializer->Accept(*this);
+            Initializer = Current;
+            if (!Initializer) {
+                Current = nullptr;
+                return;
+            }
+        } else {
+            // use 0
+            Initializer = ConstantFP::get(Context, APFloat(0.0));
+        }
+
+        AllocaInst *Alloca = CreateAlloca(Func, VariableName);
+        Builder.CreateStore(Initializer, Alloca);
+
+        OriginalValues.push_back(ValuesByName[VariableName]);
+
+        ValuesByName[VariableName] = Alloca;
+    }
+
+    expression.GetBody().Accept(*this);
+    Value *Body = Current;
+    if (!Body) {
+        Current = nullptr;
+        return;
+    }
+
+    unsigned n = expression.GetVariables().size();
+    for (unsigned i = 0; i < n; ++i) {
+        ValuesByName[expression.GetVariables()[i].first] = OriginalValues[i];
+    }
+
+    Current = Body;
 }
 
 void IRGenerator::Visit(FunctionCall &expression) {
@@ -84,7 +134,9 @@ void IRGenerator::Visit(FunctionDefinition &expression) {
 
     ValuesByName.clear();
     for (auto &Argument: Func->args()) {
-        ValuesByName[std::string(Argument.getName())] = &Argument;
+        AllocaInst *Alloca = CreateAlloca(Func, Argument.getName());
+        Builder.CreateStore(&Argument, Alloca);
+        ValuesByName[std::string(Argument.getName())] = Alloca;
     }
 
     expression.GetImplementation().Accept(*this);
@@ -112,7 +164,7 @@ void IRGenerator::Visit(UnaryExpression &expression) {
     }
 
     Function *Func = LookupFunction(std::string("unary") + expression.GetOperator());
-    if (!Func){
+    if (!Func) {
         LogError("Unknown unary operator");
         Current = nullptr;
         return;
@@ -122,6 +174,28 @@ void IRGenerator::Visit(UnaryExpression &expression) {
 }
 
 void IRGenerator::Visit(BinaryExpression &expression) {
+    if (expression.GetOperator() == '=') {
+        auto &LeftSide = dynamic_cast<VariableExpression &>(expression.GetLeftSide());
+
+        expression.GetRightSide().Accept(*this);
+        Value *RightSide = Current;
+        if (!RightSide) {
+            Current = nullptr;
+            return;
+        }
+
+        Value *Variable = ValuesByName[LeftSide.GetName()];
+        if (!Variable) {
+            LogError("Variable unknown");
+            Current = nullptr;
+            return;
+        }
+
+        Builder.CreateStore(RightSide, Variable);
+        Current = RightSide;
+        return;
+    }
+
     expression.GetLeftSide().Accept(*this);
     Value *LeftSide = Current;
     expression.GetRightSide().Accept(*this);
@@ -226,6 +300,8 @@ void IRGenerator::Visit(ConditionalExpression &expression) {
 
 void IRGenerator::Visit(LoopExpression &expression) {
     std::string VariableName = expression.GetVariableName();
+    Function *Func = Builder.GetInsertBlock()->getParent();
+    AllocaInst *Alloca = CreateAlloca(Func, VariableName);
 
     // emit for:
     expression.GetFor().Accept(*this);
@@ -235,8 +311,8 @@ void IRGenerator::Visit(LoopExpression &expression) {
         return;
     }
 
-    Function *Func = Builder.GetInsertBlock()->getParent();
-    BasicBlock *BeforeBlock = Builder.GetInsertBlock();
+    Builder.CreateStore(For, Alloca);
+
     BasicBlock *LoopBlock = BasicBlock::Create(Context, "loop", Func);
 
     // fall through from current block to loop block
@@ -244,11 +320,8 @@ void IRGenerator::Visit(LoopExpression &expression) {
 
     Builder.SetInsertPoint(LoopBlock);
 
-    PHINode *Variable = Builder.CreatePHI(Type::getDoubleTy(Context), 2, VariableName);
-    Variable->addIncoming(For, BeforeBlock);
-
-    Value *OriginalValue = ValuesByName[VariableName];
-    ValuesByName[VariableName] = Variable;
+    AllocaInst *OriginalValue = ValuesByName[VariableName];
+    ValuesByName[VariableName] = Alloca;
 
     // emit loop body:
     expression.GetBody().Accept(*this);
@@ -271,8 +344,6 @@ void IRGenerator::Visit(LoopExpression &expression) {
         Step = ConstantFP::get(Context, APFloat(1.0));
     }
 
-    Value *NextVariable = Builder.CreateFAdd(Variable, Step, "nextvar");
-
     // emit while:
     expression.GetWhile().Accept(*this);
     Value *While = Current;
@@ -281,16 +352,17 @@ void IRGenerator::Visit(LoopExpression &expression) {
         return;
     }
 
+    Value *Variable = Builder.CreateLoad(Alloca->getAllocatedType(), Alloca, VariableName.c_str());
+    Value *NextVariable = Builder.CreateFAdd(Variable, Step, "nextvar");
+    Builder.CreateStore(NextVariable, Alloca);
+
     // convert to bool (compare non-equal to 0)
     While = Builder.CreateFCmpONE(While, ConstantFP::get(Context, APFloat(0.0)), "loopcond");
 
-    BasicBlock *LoopEndBlock = Builder.GetInsertBlock();
     BasicBlock *AfterBlock = BasicBlock::Create(Context, "afterloop", Func);
 
     Builder.CreateCondBr(While, LoopBlock, AfterBlock);
     Builder.SetInsertPoint(AfterBlock);
-
-    Variable->addIncoming(NextVariable, LoopEndBlock);
 
     if (OriginalValue) {
         ValuesByName[VariableName] = OriginalValue;
@@ -307,6 +379,11 @@ void IRGenerator::Register(std::unique_ptr<FunctionDeclaration> Declaration) {
 }
 
 void IRPrinter::Visit(VariableExpression &expression) {
+    IRGenerator.Visit(expression);
+    Print();
+}
+
+void IRPrinter::Visit(VariableDefinition &expression) {
     IRGenerator.Visit(expression);
     Print();
 }

@@ -27,6 +27,8 @@ public:
 
     std::unique_ptr<Expression> ParseLoopExpression();
 
+    std::unique_ptr<Expression> ParseVariableDefinition();
+
     std::unique_ptr<FunctionDeclaration> ParseFunctionDeclaration();
 
     std::unique_ptr<FunctionDefinition> ParseFunctionDefinition();
@@ -40,7 +42,8 @@ private:
     std::map<char, int> BinaryOperatorPrecedences = {{'*', 40},
                                                      {'+', 20},
                                                      {'-', 20},
-                                                     {'<', 10}};
+                                                     {'<', 10},
+                                                     {'=', 3}};
 
     int GetTokenPrecedence();
 

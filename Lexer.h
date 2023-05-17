@@ -14,11 +14,12 @@ enum Token {
     t_otherwise = -8,
     t_while = -9,
     t_for = -10,
-    t_step = -11,
-    t_do = -12,
-    t_unary = -13,
-    t_binary = -14,
-    t_operator = -15,
+    t_in = -11,
+    t_step = -12,
+    t_do = -13,
+    t_unary = -14,
+    t_binary = -15,
+    t_operator = -16,
 };
 
 class Lexer {

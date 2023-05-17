@@ -21,7 +21,7 @@ class IRGenerator : public Visitor {
 
     legacy::FunctionPassManager &PassManager;
 
-    std::map<std::string, Value *> &ValuesByName;
+    std::map<std::string, AllocaInst *> &ValuesByName;
 
     std::map<std::string, std::unique_ptr<FunctionDeclaration>> &FunctionDeclarations;
 
@@ -29,14 +29,18 @@ class IRGenerator : public Visitor {
 
     Function *LookupFunction(std::string Name);
 
+    AllocaInst *CreateAlloca(Function *Func, StringRef Name);
+
 public:
     explicit IRGenerator(LLVMContext &Context, IRBuilder<> &Builder, class Module &Module,
-                         legacy::FunctionPassManager &PassManager, std::map<std::string, Value *> &ValuesByName,
+                         legacy::FunctionPassManager &PassManager, std::map<std::string, AllocaInst *> &ValuesByName,
                          std::map<std::string, std::unique_ptr<FunctionDeclaration>> &FunctionDeclarations)
             : Context(Context), Builder(Builder), Module(Module), PassManager(PassManager), ValuesByName(ValuesByName),
               FunctionDeclarations(FunctionDeclarations) {}
 
     void Visit(VariableExpression &expression) override;
+
+    void Visit(VariableDefinition &expression) override;
 
     void Visit(FunctionCall &expression) override;
 
@@ -79,6 +83,8 @@ public:
     explicit IRPrinter(class IRGenerator &IRGenerator) : IRGenerator(IRGenerator) {}
 
     void Visit(VariableExpression &expression) override;
+
+    void Visit(VariableDefinition &expression) override;
 
     void Visit(FunctionCall &expression) override;
 

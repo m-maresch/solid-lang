@@ -32,3 +32,22 @@ operator binary| 5 (L R)
     when L then 1
     otherwise when R then 1
     otherwise 0;
+
+operator binary: 1 (L R)
+    R;
+
+native print(x);
+func printX123(x)
+    print(x) : x = 1 : print(x) : x = 2 : print(x) : x = 3 : print(x);
+
+printX123(10);
+
+func fib2(x)
+    for a = 1, b = 1, c in (
+        while i < x for i = 3 do
+            c = a + b :
+            a = b :
+            b = c
+    ) : b;
+
+fib2(10);

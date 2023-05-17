@@ -7,6 +7,7 @@
 #include <llvm/Transforms/Scalar.h>
 #include <llvm/Transforms/Scalar/GVN.h>
 #include <llvm/Transforms/InstCombine/InstCombine.h>
+#include "llvm/Transforms/Utils.h"
 #include <llvm/Support/TargetSelect.h>
 #include "Lexer.h"
 #include "Parser.h"
@@ -35,7 +36,7 @@ private:
     std::unique_ptr<IRGenerator> IRGenerator;
     std::unique_ptr<IRPrinter> IRPrinter;
 
-    std::map<std::string, Value *> ValuesByName;
+    std::map<std::string, AllocaInst *> ValuesByName;
     std::map<std::string, std::unique_ptr<FunctionDeclaration>> FunctionDeclarations;
 
     ExitOnError OnErrorExit;

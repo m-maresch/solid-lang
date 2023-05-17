@@ -27,6 +27,26 @@ public:
     }
 };
 
+class VariableDefinition : public Expression {
+    std::vector<std::pair<std::string, std::unique_ptr<Expression>>> Variables;
+    std::unique_ptr<Expression> Body;
+
+public:
+    VariableDefinition(std::vector<std::pair<std::string, std::unique_ptr<Expression>>> Variables,
+                       std::unique_ptr<Expression> Body) : Variables(std::move(Variables)),
+                                                           Body(std::move(Body)) {}
+
+    void Accept(Visitor &visitor) override;
+
+    std::vector<std::pair<std::string, std::unique_ptr<Expression>>> &GetVariables() {
+        return Variables;
+    }
+
+    Expression &GetBody() {
+        return *Body;
+    }
+};
+
 class FunctionCall : public Expression {
     std::string Name;
     std::vector<std::unique_ptr<Expression>> Arguments;

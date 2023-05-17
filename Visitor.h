@@ -3,6 +3,8 @@
 
 class VariableExpression;
 
+class VariableDefinition;
+
 class FunctionCall;
 
 class FunctionDeclaration;
@@ -25,6 +27,8 @@ public:
     virtual ~Visitor() = default;
 
     virtual void Visit(VariableExpression &expression) = 0;
+
+    virtual void Visit(VariableDefinition &expression) = 0;
 
     virtual void Visit(FunctionCall &expression) = 0;
 

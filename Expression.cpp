@@ -4,6 +4,10 @@ void VariableExpression::Accept(Visitor &visitor) {
     visitor.Visit(*this);
 }
 
+void VariableDefinition::Accept(Visitor &visitor) {
+    visitor.Visit(*this);
+}
+
 void FunctionCall::Accept(Visitor &visitor) {
     visitor.Visit(*this);
 }

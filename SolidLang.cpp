@@ -56,6 +56,7 @@ void SolidLang::InitLLVM() {
     Module->setDataLayout(JIT->getDataLayout());
 
     PassManager = std::make_unique<legacy::FunctionPassManager>(Module.get());
+    PassManager->add(createPromoteMemoryToRegisterPass());
     PassManager->add(createInstructionCombiningPass());
     PassManager->add(createReassociatePass());
     PassManager->add(createGVNPass());
