@@ -1,14 +1,22 @@
 #include "SolidLang.h"
 
-void SolidLang::Start() {
+int SolidLang::Start() {
+    int ExitCode = 0;
+
     InitializeNativeTarget();
     InitializeNativeTargetAsmPrinter();
     InitializeNativeTargetAsmParser();
 
-    Lexer = std::make_unique<class Lexer>();
+    if (IsRepl()) {
+        In = stdin;
+    } else {
+        In = fopen(InputFile.c_str(), "r");
+    }
+
+    Lexer = std::make_unique<class Lexer>(In);
     Parser = std::make_unique<class Parser>(*Lexer);
 
-    fprintf(stderr, "ready> ");
+    IfReplPrint("ready> ");
     Lexer->GetNextToken();
 
     JIT = OnErrorExit(JIT::Create());
@@ -16,13 +24,25 @@ void SolidLang::Start() {
 
     ProcessInput();
 
-    Module->print(errs(), nullptr);
+    if (!IsRepl()) {
+        fclose(In);
+    }
+
+    if (HasOutputFile()) {
+        ExitCode = WriteObjectFile();
+    }
+
+    if (PrintIR) {
+        Module->print(errs(), nullptr);
+    }
+
+    return ExitCode;
 }
 
 void SolidLang::ProcessInput() {
     bool done = false;
     while (!done) {
-        fprintf(stderr, "ready> ");
+        IfReplPrint("ready> ");
         switch (Lexer->GetCurrentToken()) {
             case t_eof:
                 done = true;
@@ -65,20 +85,67 @@ void SolidLang::InitLLVM() {
 
     Builder = std::make_unique<IRBuilder<>>(*Context);
 
-    IRGenerator = std::make_unique<class IRGenerator>(*Context, *Builder, *Module, *PassManager, ValuesByName,
-                                                      FunctionDeclarations);
-    IRPrinter = std::make_unique<class IRPrinter>(*IRGenerator);
+    auto IRGenerator = std::make_unique<class IRGenerator>(*Context, *Builder, *Module, *PassManager, ValuesByName,
+                                                           FunctionDeclarations);
+
+    if (PrintIR) {
+        Visitor = std::make_unique<class IRPrinter>(std::move(IRGenerator));
+    } else {
+        Visitor = std::move(IRGenerator);
+    }
+}
+
+int SolidLang::WriteObjectFile() {
+    auto TargetTriple = sys::getDefaultTargetTriple();
+    Module->setTargetTriple(TargetTriple);
+
+    std::string Error;
+    auto Target = TargetRegistry::lookupTarget(TargetTriple, Error);
+
+    if (!Target) {
+        errs() << Error;
+        return 1;
+    }
+
+    auto CPU = "generic";
+    TargetOptions Options;
+    auto Machine = Target->createTargetMachine(TargetTriple, CPU, "", Options, std::optional<Reloc::Model>());
+
+    Module->setDataLayout(Machine->createDataLayout());
+
+    std::error_code ErrorCode;
+    raw_fd_ostream OutputStream(OutputFile, ErrorCode, sys::fs::OF_None);
+
+    if (ErrorCode) {
+        errs() << "could not open file: " << ErrorCode.message();
+        return 1;
+    }
+
+    legacy::PassManager OutputPassManager;
+    if (Machine->addPassesToEmitFile(OutputPassManager, OutputStream, nullptr, CGFT_ObjectFile)) {
+        errs() << "could not emit file";
+        return 1;
+    }
+
+    OutputPassManager.run(*Module);
+    OutputStream.flush();
+
+    outs() << "created " << OutputFile << "\n";
+
+    return 0;
 }
 
 void SolidLang::HandleFunction(Expression *ParsedExpression) {
     if (ParsedExpression) {
-        fprintf(stderr, "Successfully parsed\n");
-        ParsedExpression->Accept(*IRPrinter);
+        IfReplPrint("Successfully parsed\n");
+        ParsedExpression->Accept(*Visitor);
 
-        OnErrorExit(JIT->addModule(
-                ThreadSafeModule(std::move(Module), std::move(Context))
-        ));
-        InitLLVM();
+        if (IsRepl()) {
+            OnErrorExit(JIT->addModule(
+                    ThreadSafeModule(std::move(Module), std::move(Context))
+            ));
+            InitLLVM();
+        }
     } else {
         Lexer->GetNextToken();
     }
@@ -86,9 +153,9 @@ void SolidLang::HandleFunction(Expression *ParsedExpression) {
 
 void SolidLang::HandleNative(std::unique_ptr<FunctionDeclaration> Declaration) {
     if (Declaration) {
-        fprintf(stderr, "Successfully parsed\n");
-        Declaration->Accept(*IRPrinter);
-        IRGenerator->Register(std::move(Declaration));
+        IfReplPrint("Successfully parsed\n");
+        Declaration->Accept(*Visitor);
+        Visitor->Register(std::move(Declaration));
     } else {
         Lexer->GetNextToken();
     }
@@ -96,25 +163,27 @@ void SolidLang::HandleNative(std::unique_ptr<FunctionDeclaration> Declaration) {
 
 void SolidLang::HandleTopLevelExpression(Expression *ParsedExpression) {
     if (ParsedExpression) {
-        fprintf(stderr, "Successfully parsed\n");
-        ParsedExpression->Accept(*IRPrinter);
+        IfReplPrint("Successfully parsed\n");
+        ParsedExpression->Accept(*Visitor);
 
-        auto ResourceTracker = JIT->getMainJITDylib().createResourceTracker();
+        if (IsRepl()) {
+            auto ResourceTracker = JIT->getMainJITDylib().createResourceTracker();
 
-        OnErrorExit(JIT->addModule(
-                ThreadSafeModule(std::move(Module), std::move(Context)),
-                ResourceTracker
-        ));
-        InitLLVM();
+            OnErrorExit(JIT->addModule(
+                    ThreadSafeModule(std::move(Module), std::move(Context)),
+                    ResourceTracker
+            ));
+            InitLLVM();
 
-        auto TopLevelExprSymbol = OnErrorExit(JIT->lookup("__anonymous_top_level_expr"));
-        assert(TopLevelExprSymbol && "Top level expression not found");
+            auto TopLevelExprSymbol = OnErrorExit(JIT->lookup("__anonymous_top_level_expr"));
+            assert(TopLevelExprSymbol && "Top level expression not found");
 
-        // Cast symbol's address to be able to call it as a native function (no arguments, returns double)
-        auto (*TopLevelExpr)() = (double (*)()) (intptr_t) TopLevelExprSymbol.getAddress();
-        fprintf(stderr, "Evaluated to %f\n", TopLevelExpr());
+            // Cast symbol's address to be able to call it as a native function (no arguments, returns double)
+            auto (*TopLevelExpr)() = (double (*)()) (intptr_t) TopLevelExprSymbol.getAddress();
+            fprintf(stderr, "Evaluated to %f\n", TopLevelExpr());
 
-        OnErrorExit(ResourceTracker->remove());
+            OnErrorExit(ResourceTracker->remove());
+        }
     } else {
         Lexer->GetNextToken();
     }

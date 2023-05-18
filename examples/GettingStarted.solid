@@ -51,3 +51,5 @@ func fib2(x)
     ) : b;
 
 fib2(10);
+
+func avg(x y) (x + y) * 0.5;

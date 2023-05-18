@@ -1,5 +1,5 @@
-#ifndef SOLID_LANG_VISITOR_H
-#define SOLID_LANG_VISITOR_H
+#ifndef SOLID_LANG_EXPRESSIONVISITOR_H
+#define SOLID_LANG_EXPRESSIONVISITOR_H
 
 class VariableExpression;
 
@@ -21,10 +21,10 @@ class ConditionalExpression;
 
 class LoopExpression;
 
-class Visitor {
+class ExpressionVisitor {
 
 public:
-    virtual ~Visitor() = default;
+    virtual ~ExpressionVisitor() = default;
 
     virtual void Visit(VariableExpression &expression) = 0;
 
@@ -45,6 +45,8 @@ public:
     virtual void Visit(ConditionalExpression &expression) = 0;
 
     virtual void Visit(LoopExpression &expression) = 0;
+
+    virtual void Register(std::unique_ptr<FunctionDeclaration> Declaration) = 0;
 };
 
 #endif

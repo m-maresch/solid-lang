@@ -1,41 +1,41 @@
 #include "Expression.h"
 
-void VariableExpression::Accept(Visitor &visitor) {
+void VariableExpression::Accept(ExpressionVisitor &visitor) {
     visitor.Visit(*this);
 }
 
-void VariableDefinition::Accept(Visitor &visitor) {
+void VariableDefinition::Accept(ExpressionVisitor &visitor) {
     visitor.Visit(*this);
 }
 
-void FunctionCall::Accept(Visitor &visitor) {
+void FunctionCall::Accept(ExpressionVisitor &visitor) {
     visitor.Visit(*this);
 }
 
-void FunctionDeclaration::Accept(Visitor &visitor) {
+void FunctionDeclaration::Accept(ExpressionVisitor &visitor) {
     visitor.Visit(*this);
 }
 
-void FunctionDefinition::Accept(Visitor &visitor) {
+void FunctionDefinition::Accept(ExpressionVisitor &visitor) {
     visitor.Visit(*this);
 }
 
-void UnaryExpression::Accept(Visitor &visitor) {
+void UnaryExpression::Accept(ExpressionVisitor &visitor) {
     visitor.Visit(*this);
 }
 
-void BinaryExpression::Accept(Visitor &visitor) {
+void BinaryExpression::Accept(ExpressionVisitor &visitor) {
     visitor.Visit(*this);
 }
 
-void NumExpression::Accept(Visitor &visitor) {
+void NumExpression::Accept(ExpressionVisitor &visitor) {
     visitor.Visit(*this);
 }
 
-void ConditionalExpression::Accept(Visitor &visitor) {
+void ConditionalExpression::Accept(ExpressionVisitor &visitor) {
     visitor.Visit(*this);
 }
 
-void LoopExpression::Accept(Visitor &visitor) {
+void LoopExpression::Accept(ExpressionVisitor &visitor) {
     visitor.Visit(*this);
 }

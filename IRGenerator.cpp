@@ -379,51 +379,55 @@ void IRGenerator::Register(std::unique_ptr<FunctionDeclaration> Declaration) {
 }
 
 void IRPrinter::Visit(VariableExpression &expression) {
-    IRGenerator.Visit(expression);
+    IRGenerator->Visit(expression);
     Print();
 }
 
 void IRPrinter::Visit(VariableDefinition &expression) {
-    IRGenerator.Visit(expression);
+    IRGenerator->Visit(expression);
     Print();
 }
 
 void IRPrinter::Visit(FunctionCall &expression) {
-    IRGenerator.Visit(expression);
+    IRGenerator->Visit(expression);
     Print();
 }
 
 void IRPrinter::Visit(FunctionDeclaration &expression) {
-    IRGenerator.Visit(expression);
+    IRGenerator->Visit(expression);
     Print();
 }
 
 void IRPrinter::Visit(FunctionDefinition &expression) {
-    IRGenerator.Visit(expression);
+    IRGenerator->Visit(expression);
     Print();
 }
 
 void IRPrinter::Visit(UnaryExpression &expression) {
-    IRGenerator.Visit(expression);
+    IRGenerator->Visit(expression);
     Print();
 }
 
 void IRPrinter::Visit(BinaryExpression &expression) {
-    IRGenerator.Visit(expression);
+    IRGenerator->Visit(expression);
     Print();
 }
 
 void IRPrinter::Visit(NumExpression &expression) {
-    IRGenerator.Visit(expression);
+    IRGenerator->Visit(expression);
     Print();
 }
 
 void IRPrinter::Visit(ConditionalExpression &expression) {
-    IRGenerator.Visit(expression);
+    IRGenerator->Visit(expression);
     Print();
 }
 
 void IRPrinter::Visit(LoopExpression &expression) {
-    IRGenerator.Visit(expression);
+    IRGenerator->Visit(expression);
     Print();
+}
+
+void IRPrinter::Register(std::unique_ptr<FunctionDeclaration> Declaration) {
+    IRGenerator->Register(std::move(Declaration));
 }

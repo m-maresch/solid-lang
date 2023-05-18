@@ -6,14 +6,14 @@ bool IsDigitCharacter(char input) {
 
 int Lexer::GetToken() {
     while (isspace(LastChar))
-        LastChar = getchar();
+        LastChar = getc(In);
 
     if (isalpha(LastChar)) {
         IdVal = (char) LastChar;
-        LastChar = getchar();
+        LastChar = getc(In);
         while (isalnum(LastChar)) {
             IdVal += (char) LastChar;
-            LastChar = getchar();
+            LastChar = getc(In);
         }
 
         if (IdVal == "func")
@@ -49,7 +49,7 @@ int Lexer::GetToken() {
         std::string Num;
         do {
             Num += (char) LastChar;
-            LastChar = getchar();
+            LastChar = getc(In);
         } while (IsDigitCharacter(LastChar));
 
         NumVal = strtod(Num.c_str(), nullptr);
@@ -58,7 +58,7 @@ int Lexer::GetToken() {
 
     if (LastChar == '#') {
         do {
-            LastChar = getchar();
+            LastChar = getc(In);
         } while (LastChar != EOF && LastChar != '\n' && LastChar != '\r');
 
         if (LastChar != EOF)
@@ -69,6 +69,6 @@ int Lexer::GetToken() {
         return t_eof;
 
     int Current = LastChar;
-    LastChar = getchar();
+    LastChar = getc(In);
     return Current;
 }

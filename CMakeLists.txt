@@ -12,7 +12,7 @@ include_directories(${LLVM_INCLUDE_DIRS})
 separate_arguments(LLVM_DEFINITIONS_LIST NATIVE_COMMAND ${LLVM_DEFINITIONS})
 add_definitions(${LLVM_DEFINITIONS_LIST})
 
-add_executable(solid_lang main.cpp Lexer.cpp Lexer.h Expression.cpp Expression.h Parser.cpp Parser.h IRGenerator.cpp IRGenerator.h Visitor.h JIT.h SolidLang.cpp SolidLang.h BuiltIns.cpp BuiltIns.h)
+add_executable(solid_lang main.cpp Lexer.cpp Lexer.h Expression.cpp Expression.h Parser.cpp Parser.h IRGenerator.cpp IRGenerator.h ExpressionVisitor.h JIT.h SolidLang.cpp SolidLang.h BuiltIns.cpp BuiltIns.h)
 
 llvm_map_components_to_libnames(llvm_libs core orcjit native)
 target_link_libraries(solid_lang ${llvm_libs})

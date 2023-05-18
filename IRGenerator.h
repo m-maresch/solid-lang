@@ -8,11 +8,11 @@
 #include <map>
 #include <utility>
 
-#include "Visitor.h"
+#include "ExpressionVisitor.h"
 
 using namespace llvm;
 
-class IRGenerator : public Visitor {
+class IRGenerator : public ExpressionVisitor {
     LLVMContext &Context;
 
     IRBuilder<> &Builder;
@@ -58,6 +58,8 @@ public:
 
     void Visit(LoopExpression &expression) override;
 
+    void Register(std::unique_ptr<FunctionDeclaration> Declaration) override;
+
     Value *GetValue() {
         return Current;
     }
@@ -65,22 +67,20 @@ public:
     void LogError(const char *Message) {
         fprintf(stderr, "Error: %s\n", Message);
     }
-
-    void Register(std::unique_ptr<FunctionDeclaration> Declaration);
 };
 
-class IRPrinter : public Visitor {
-    IRGenerator &IRGenerator;
+class IRPrinter : public ExpressionVisitor {
+    std::unique_ptr<class IRGenerator> IRGenerator;
 
     void Print() {
-        if (auto *IR = IRGenerator.GetValue()) {
+        if (auto *IR = IRGenerator->GetValue()) {
             IR->print(errs());
             fprintf(stderr, "\n");
         }
     }
 
 public:
-    explicit IRPrinter(class IRGenerator &IRGenerator) : IRGenerator(IRGenerator) {}
+    explicit IRPrinter(std::unique_ptr<class IRGenerator> IRGenerator) : IRGenerator(std::move(IRGenerator)) {}
 
     void Visit(VariableExpression &expression) override;
 
@@ -101,6 +101,8 @@ public:
     void Visit(ConditionalExpression &expression) override;
 
     void Visit(LoopExpression &expression) override;
+
+    void Register(std::unique_ptr<FunctionDeclaration> Declaration) override;
 };
 
 

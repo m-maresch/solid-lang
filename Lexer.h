@@ -25,6 +25,8 @@ enum Token {
 class Lexer {
 
 public:
+    explicit Lexer(FILE *In) : In(In) {}
+
     int GetCurrentToken() { return CurrentToken; }
 
     int GetNextToken() {
@@ -37,6 +39,7 @@ public:
     double GetNumVal() { return NumVal; }
 
 private:
+    FILE *In;
     std::string IdVal;
     double NumVal;
     int LastChar = ' ';
