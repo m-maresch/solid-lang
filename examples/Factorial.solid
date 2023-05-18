@@ -1,0 +1,6 @@
+func fac(x)
+    when x < 2 then 1
+    otherwise x * fac(x - 1);
+
+fac(4);
+fac(5);

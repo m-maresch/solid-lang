@@ -1,16 +1,3 @@
-func fib(x)
-    when x < 3 then 1
-    otherwise fib(x-1) + fib(x-2);
-
-fib(10);
-
-native printc(x);
-func printstars(n)
-    while i < n let i = 1 step 1 do
-        printc(42); # 42 = '*'
-
-printstars(100);
-
 operator binary> 10 (L R)
     R < L;
 
@@ -41,15 +28,3 @@ func printX123(x)
     print(x) : x = 1 : print(x) : x = 2 : print(x) : x = 3 : print(x);
 
 printX123(10);
-
-func fib2(x)
-    let a = 1, b = 1, c in (
-        while i < x let i = 3 do
-            c = a + b :
-            a = b :
-            b = c
-    ) : b;
-
-fib2(10);
-
-func avg(x y) (x + y) * 0.5;

@@ -76,9 +76,9 @@ private:
         return OutputFile != "-";
     }
 
-    void IfReplPrint(const char *msg) {
+    void IfReplPrint(const char *Message) {
         if (IsRepl()) {
-            fprintf(stderr, "%s", msg);
+            fprintf(stderr, "%s", Message);
         }
     }
 };

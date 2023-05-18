@@ -38,25 +38,25 @@ public:
             : Context(Context), Builder(Builder), Module(Module), PassManager(PassManager), ValuesByName(ValuesByName),
               FunctionDeclarations(FunctionDeclarations) {}
 
-    void Visit(VariableExpression &expression) override;
+    void Visit(VariableExpression &Expression) override;
 
-    void Visit(VariableDefinition &expression) override;
+    void Visit(VariableDefinition &Expression) override;
 
-    void Visit(FunctionCall &expression) override;
+    void Visit(FunctionCall &Expression) override;
 
-    void Visit(FunctionDeclaration &expression) override;
+    void Visit(FunctionDeclaration &Expression) override;
 
-    void Visit(FunctionDefinition &expression) override;
+    void Visit(FunctionDefinition &Expression) override;
 
-    void Visit(UnaryExpression &expression) override;
+    void Visit(UnaryExpression &Expression) override;
 
-    void Visit(BinaryExpression &expression) override;
+    void Visit(BinaryExpression &Expression) override;
 
-    void Visit(NumExpression &expression) override;
+    void Visit(NumExpression &Expression) override;
 
-    void Visit(ConditionalExpression &expression) override;
+    void Visit(ConditionalExpression &Expression) override;
 
-    void Visit(LoopExpression &expression) override;
+    void Visit(LoopExpression &Expression) override;
 
     void Register(std::unique_ptr<FunctionDeclaration> Declaration) override;
 
@@ -74,33 +74,34 @@ class IRPrinter : public ExpressionVisitor {
 
     void Print() {
         if (auto *IR = IRGenerator->GetValue()) {
+            errs() << "\n" << "Generated LLVM IR:" << "\n";
             IR->print(errs());
-            fprintf(stderr, "\n");
+            errs() << "\n";
         }
     }
 
 public:
     explicit IRPrinter(std::unique_ptr<class IRGenerator> IRGenerator) : IRGenerator(std::move(IRGenerator)) {}
 
-    void Visit(VariableExpression &expression) override;
+    void Visit(VariableExpression &Expression) override;
 
-    void Visit(VariableDefinition &expression) override;
+    void Visit(VariableDefinition &Expression) override;
 
-    void Visit(FunctionCall &expression) override;
+    void Visit(FunctionCall &Expression) override;
 
-    void Visit(FunctionDeclaration &expression) override;
+    void Visit(FunctionDeclaration &Expression) override;
 
-    void Visit(FunctionDefinition &expression) override;
+    void Visit(FunctionDefinition &Expression) override;
 
-    void Visit(UnaryExpression &expression) override;
+    void Visit(UnaryExpression &Expression) override;
 
-    void Visit(BinaryExpression &expression) override;
+    void Visit(BinaryExpression &Expression) override;
 
-    void Visit(NumExpression &expression) override;
+    void Visit(NumExpression &Expression) override;
 
-    void Visit(ConditionalExpression &expression) override;
+    void Visit(ConditionalExpression &Expression) override;
 
-    void Visit(LoopExpression &expression) override;
+    void Visit(LoopExpression &Expression) override;
 
     void Register(std::unique_ptr<FunctionDeclaration> Declaration) override;
 };

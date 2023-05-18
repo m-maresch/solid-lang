@@ -26,25 +26,25 @@ class ExpressionVisitor {
 public:
     virtual ~ExpressionVisitor() = default;
 
-    virtual void Visit(VariableExpression &expression) = 0;
+    virtual void Visit(VariableExpression &Expression) = 0;
 
-    virtual void Visit(VariableDefinition &expression) = 0;
+    virtual void Visit(VariableDefinition &Expression) = 0;
 
-    virtual void Visit(FunctionCall &expression) = 0;
+    virtual void Visit(FunctionCall &Expression) = 0;
 
-    virtual void Visit(FunctionDeclaration &expression) = 0;
+    virtual void Visit(FunctionDeclaration &Expression) = 0;
 
-    virtual void Visit(FunctionDefinition &expression) = 0;
+    virtual void Visit(FunctionDefinition &Expression) = 0;
 
-    virtual void Visit(UnaryExpression &expression) = 0;
+    virtual void Visit(UnaryExpression &Expression) = 0;
 
-    virtual void Visit(BinaryExpression &expression) = 0;
+    virtual void Visit(BinaryExpression &Expression) = 0;
 
-    virtual void Visit(NumExpression &expression) = 0;
+    virtual void Visit(NumExpression &Expression) = 0;
 
-    virtual void Visit(ConditionalExpression &expression) = 0;
+    virtual void Visit(ConditionalExpression &Expression) = 0;
 
-    virtual void Visit(LoopExpression &expression) = 0;
+    virtual void Visit(LoopExpression &Expression) = 0;
 
     virtual void Register(std::unique_ptr<FunctionDeclaration> Declaration) = 0;
 };

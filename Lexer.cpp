@@ -1,7 +1,7 @@
 #include "Lexer.h"
 
-bool IsDigitCharacter(char input) {
-    return isdigit(input) || input == '.';
+bool IsDigitCharacter(char Input) {
+    return isdigit(Input) || Input == '.';
 }
 
 int Lexer::GetToken() {

@@ -33,6 +33,7 @@ int SolidLang::Start() {
     }
 
     if (PrintIR) {
+        errs() << "\n";
         Module->print(errs(), nullptr);
     }
 

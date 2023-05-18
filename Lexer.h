@@ -27,7 +27,7 @@ class Lexer {
 public:
     explicit Lexer(FILE *In) : In(In) {}
 
-    int GetCurrentToken() { return CurrentToken; }
+    int GetCurrentToken() const { return CurrentToken; }
 
     int GetNextToken() {
         CurrentToken = GetToken();
@@ -36,7 +36,7 @@ public:
 
     std::string GetIdVal() { return IdVal; }
 
-    double GetNumVal() { return NumVal; }
+    double GetNumVal() const { return NumVal; }
 
 private:
     FILE *In;

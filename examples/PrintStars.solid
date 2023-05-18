@@ -1,0 +1,6 @@
+native printc(x);
+func printStars(n)
+    while i < n let i = 1 step 1 do
+        printc(42); # 42 = '*'
+
+printStars(100);

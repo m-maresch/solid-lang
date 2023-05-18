@@ -23,22 +23,22 @@ AllocaInst *IRGenerator::CreateAlloca(Function *Func, StringRef Name) {
     return TmpBuilder.CreateAlloca(Type::getDoubleTy(Context), nullptr, Name);
 }
 
-void IRGenerator::Visit(VariableExpression &expression) {
-    AllocaInst *Alloca = ValuesByName[expression.GetName()];
+void IRGenerator::Visit(VariableExpression &Expression) {
+    AllocaInst *Alloca = ValuesByName[Expression.GetName()];
     if (!Alloca) {
         LogError("Variable unknown");
     }
 
-    Current = Builder.CreateLoad(Alloca->getAllocatedType(), Alloca, expression.GetName().c_str());
+    Current = Builder.CreateLoad(Alloca->getAllocatedType(), Alloca, Expression.GetName().c_str());
 }
 
-void IRGenerator::Visit(VariableDefinition &expression) {
+void IRGenerator::Visit(VariableDefinition &Expression) {
     std::vector<AllocaInst *> OriginalValues;
     Function *Func = Builder.GetInsertBlock()->getParent();
 
-    for (auto &Variable: expression.GetVariables()) {
-        const std::string &VariableName = Variable.first;
-        Expression *VariableInitializer = Variable.second.get();
+    for (auto &Variable: Expression.GetVariables()) {
+        const auto &VariableName = Variable.first;
+        auto VariableInitializer = Variable.second.get();
 
         Value *Initializer;
         if (VariableInitializer) {
@@ -61,29 +61,29 @@ void IRGenerator::Visit(VariableDefinition &expression) {
         ValuesByName[VariableName] = Alloca;
     }
 
-    expression.GetBody().Accept(*this);
+    Expression.GetBody().Accept(*this);
     Value *Body = Current;
     if (!Body) {
         Current = nullptr;
         return;
     }
 
-    unsigned n = expression.GetVariables().size();
+    unsigned n = Expression.GetVariables().size();
     for (unsigned i = 0; i < n; ++i) {
-        ValuesByName[expression.GetVariables()[i].first] = OriginalValues[i];
+        ValuesByName[Expression.GetVariables()[i].first] = OriginalValues[i];
     }
 
     Current = Body;
 }
 
-void IRGenerator::Visit(FunctionCall &expression) {
-    Function *Function = LookupFunction(expression.GetName());
+void IRGenerator::Visit(FunctionCall &Expression) {
+    Function *Function = LookupFunction(Expression.GetName());
     if (!Function) {
         LogError("Calling unknown function");
         return;
     }
 
-    unsigned n = expression.GetArguments().size();
+    unsigned n = Expression.GetArguments().size();
     if (Function->arg_size() != n) {
         LogError("Invalid number of arguments passed to function");
         return;
@@ -91,7 +91,7 @@ void IRGenerator::Visit(FunctionCall &expression) {
 
     std::vector<Value *> ArgumentValues;
     for (unsigned i = 0; i < n; ++i) {
-        expression.GetArguments()[i]->Accept(*this);
+        Expression.GetArguments()[i]->Accept(*this);
         ArgumentValues.push_back(Current);
         if (!ArgumentValues.back()) {
             Current = nullptr;
@@ -102,24 +102,24 @@ void IRGenerator::Visit(FunctionCall &expression) {
     Current = Builder.CreateCall(Function, ArgumentValues, "calltmp");
 }
 
-void IRGenerator::Visit(FunctionDeclaration &expression) {
-    unsigned n = expression.GetArguments().size();
+void IRGenerator::Visit(FunctionDeclaration &Expression) {
+    unsigned n = Expression.GetArguments().size();
     std::vector<Type *> Doubles(n, Type::getDoubleTy(Context));
 
     FunctionType *FuncType = FunctionType::get(Type::getDoubleTy(Context), Doubles, false);
 
-    Function *Func = Function::Create(FuncType, Function::ExternalLinkage, expression.GetName(), Module);
+    Function *Func = Function::Create(FuncType, Function::ExternalLinkage, Expression.GetName(), Module);
 
     unsigned i = 0;
     for (auto &Argument: Func->args()) {
-        Argument.setName(expression.GetArguments()[i++]);
+        Argument.setName(Expression.GetArguments()[i++]);
     }
 
     Current = Func;
 }
 
-void IRGenerator::Visit(FunctionDefinition &expression) {
-    auto Declaration = expression.TakeDeclaration();
+void IRGenerator::Visit(FunctionDefinition &Expression) {
+    auto Declaration = Expression.TakeDeclaration();
     auto Name = Declaration->GetName();
     FunctionDeclarations[Name] = std::move(Declaration);
     Function *Func = LookupFunction(Name);
@@ -139,7 +139,7 @@ void IRGenerator::Visit(FunctionDefinition &expression) {
         ValuesByName[std::string(Argument.getName())] = Alloca;
     }
 
-    expression.GetImplementation().Accept(*this);
+    Expression.GetImplementation().Accept(*this);
     if (Value *ReturnValue = Current) {
         Builder.CreateRet(ReturnValue);
 
@@ -155,15 +155,15 @@ void IRGenerator::Visit(FunctionDefinition &expression) {
     Current = nullptr;
 }
 
-void IRGenerator::Visit(UnaryExpression &expression) {
-    expression.GetOperand().Accept(*this);
+void IRGenerator::Visit(UnaryExpression &Expression) {
+    Expression.GetOperand().Accept(*this);
     Value *Operand = Current;
     if (!Operand) {
         Current = nullptr;
         return;
     }
 
-    Function *Func = LookupFunction(std::string("unary") + expression.GetOperator());
+    Function *Func = LookupFunction(std::string("unary") + Expression.GetOperator());
     if (!Func) {
         LogError("Unknown unary operator");
         Current = nullptr;
@@ -173,11 +173,11 @@ void IRGenerator::Visit(UnaryExpression &expression) {
     Current = Builder.CreateCall(Func, Operand, "unop");
 }
 
-void IRGenerator::Visit(BinaryExpression &expression) {
-    if (expression.GetOperator() == '=') {
-        auto &LeftSide = dynamic_cast<VariableExpression &>(expression.GetLeftSide());
+void IRGenerator::Visit(BinaryExpression &Expression) {
+    if (Expression.GetOperator() == '=') {
+        auto &LeftSide = dynamic_cast<VariableExpression &>(Expression.GetLeftSide());
 
-        expression.GetRightSide().Accept(*this);
+        Expression.GetRightSide().Accept(*this);
         Value *RightSide = Current;
         if (!RightSide) {
             Current = nullptr;
@@ -196,9 +196,9 @@ void IRGenerator::Visit(BinaryExpression &expression) {
         return;
     }
 
-    expression.GetLeftSide().Accept(*this);
+    Expression.GetLeftSide().Accept(*this);
     Value *LeftSide = Current;
-    expression.GetRightSide().Accept(*this);
+    Expression.GetRightSide().Accept(*this);
     Value *RightSide = Current;
 
     if (!LeftSide || !RightSide) {
@@ -206,7 +206,7 @@ void IRGenerator::Visit(BinaryExpression &expression) {
         return;
     }
 
-    switch (expression.GetOperator()) {
+    switch (Expression.GetOperator()) {
         case '+':
             Current = Builder.CreateFAdd(LeftSide, RightSide, "addtmp");
             return;
@@ -224,7 +224,7 @@ void IRGenerator::Visit(BinaryExpression &expression) {
             break;
     }
 
-    Function *Func = LookupFunction(std::string("binary") + expression.GetOperator());
+    Function *Func = LookupFunction(std::string("binary") + Expression.GetOperator());
     if (!Func) {
         LogError("Unknown binary operator");
         Current = nullptr;
@@ -236,12 +236,12 @@ void IRGenerator::Visit(BinaryExpression &expression) {
     Current = Builder.CreateCall(Func, Args, "binop");
 }
 
-void IRGenerator::Visit(NumExpression &expression) {
-    Current = ConstantFP::get(Context, APFloat(expression.GetVal()));
+void IRGenerator::Visit(NumExpression &Expression) {
+    Current = ConstantFP::get(Context, APFloat(Expression.GetVal()));
 }
 
-void IRGenerator::Visit(ConditionalExpression &expression) {
-    expression.GetCondition().Accept(*this);
+void IRGenerator::Visit(ConditionalExpression &Expression) {
+    Expression.GetCondition().Accept(*this);
     Value *Condition = Current;
     if (!Condition) {
         Current = nullptr;
@@ -263,7 +263,7 @@ void IRGenerator::Visit(ConditionalExpression &expression) {
     // emit then:
     Builder.SetInsertPoint(ThenBlock);
 
-    expression.GetThen().Accept(*this);
+    Expression.GetThen().Accept(*this);
     Value *Then = Current;
     if (!Then) {
         Current = nullptr;
@@ -277,7 +277,7 @@ void IRGenerator::Visit(ConditionalExpression &expression) {
     Func->insert(Func->end(), OtherwiseBlock);
     Builder.SetInsertPoint(OtherwiseBlock);
 
-    expression.GetOtherwise().Accept(*this);
+    Expression.GetOtherwise().Accept(*this);
     Value *Otherwise = Current;
     if (!Otherwise) {
         Current = nullptr;
@@ -298,13 +298,13 @@ void IRGenerator::Visit(ConditionalExpression &expression) {
     Current = PHI;
 }
 
-void IRGenerator::Visit(LoopExpression &expression) {
-    std::string VariableName = expression.GetVariableName();
+void IRGenerator::Visit(LoopExpression &Expression) {
+    std::string VariableName = Expression.GetVariableName();
     Function *Func = Builder.GetInsertBlock()->getParent();
     AllocaInst *Alloca = CreateAlloca(Func, VariableName);
 
     // emit let:
-    expression.GetLet().Accept(*this);
+    Expression.GetLet().Accept(*this);
     Value *Let = Current;
     if (!Let) {
         Current = nullptr;
@@ -324,7 +324,7 @@ void IRGenerator::Visit(LoopExpression &expression) {
     ValuesByName[VariableName] = Alloca;
 
     // emit loop body:
-    expression.GetBody().Accept(*this);
+    Expression.GetBody().Accept(*this);
     if (!Current) {
         Current = nullptr;
         return;
@@ -332,8 +332,8 @@ void IRGenerator::Visit(LoopExpression &expression) {
 
     // emit step:
     Value *Step;
-    if (expression.HasStep()) {
-        expression.GetStep().Accept(*this);
+    if (Expression.HasStep()) {
+        Expression.GetStep().Accept(*this);
         Step = Current;
         if (!Step) {
             Current = nullptr;
@@ -345,7 +345,7 @@ void IRGenerator::Visit(LoopExpression &expression) {
     }
 
     // emit while:
-    expression.GetWhile().Accept(*this);
+    Expression.GetWhile().Accept(*this);
     Value *While = Current;
     if (!While) {
         Current = nullptr;
@@ -378,53 +378,53 @@ void IRGenerator::Register(std::unique_ptr<FunctionDeclaration> Declaration) {
     FunctionDeclarations[Declaration->GetName()] = std::move(Declaration);
 }
 
-void IRPrinter::Visit(VariableExpression &expression) {
-    IRGenerator->Visit(expression);
+void IRPrinter::Visit(VariableExpression &Expression) {
+    IRGenerator->Visit(Expression);
     Print();
 }
 
-void IRPrinter::Visit(VariableDefinition &expression) {
-    IRGenerator->Visit(expression);
+void IRPrinter::Visit(VariableDefinition &Expression) {
+    IRGenerator->Visit(Expression);
     Print();
 }
 
-void IRPrinter::Visit(FunctionCall &expression) {
-    IRGenerator->Visit(expression);
+void IRPrinter::Visit(FunctionCall &Expression) {
+    IRGenerator->Visit(Expression);
     Print();
 }
 
-void IRPrinter::Visit(FunctionDeclaration &expression) {
-    IRGenerator->Visit(expression);
+void IRPrinter::Visit(FunctionDeclaration &Expression) {
+    IRGenerator->Visit(Expression);
     Print();
 }
 
-void IRPrinter::Visit(FunctionDefinition &expression) {
-    IRGenerator->Visit(expression);
+void IRPrinter::Visit(FunctionDefinition &Expression) {
+    IRGenerator->Visit(Expression);
     Print();
 }
 
-void IRPrinter::Visit(UnaryExpression &expression) {
-    IRGenerator->Visit(expression);
+void IRPrinter::Visit(UnaryExpression &Expression) {
+    IRGenerator->Visit(Expression);
     Print();
 }
 
-void IRPrinter::Visit(BinaryExpression &expression) {
-    IRGenerator->Visit(expression);
+void IRPrinter::Visit(BinaryExpression &Expression) {
+    IRGenerator->Visit(Expression);
     Print();
 }
 
-void IRPrinter::Visit(NumExpression &expression) {
-    IRGenerator->Visit(expression);
+void IRPrinter::Visit(NumExpression &Expression) {
+    IRGenerator->Visit(Expression);
     Print();
 }
 
-void IRPrinter::Visit(ConditionalExpression &expression) {
-    IRGenerator->Visit(expression);
+void IRPrinter::Visit(ConditionalExpression &Expression) {
+    IRGenerator->Visit(Expression);
     Print();
 }
 
-void IRPrinter::Visit(LoopExpression &expression) {
-    IRGenerator->Visit(expression);
+void IRPrinter::Visit(LoopExpression &Expression) {
+    IRGenerator->Visit(Expression);
     Print();
 }
 

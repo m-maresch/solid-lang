@@ -1,0 +1,17 @@
+func fib(x)
+    when x < 3 then 1
+    otherwise fib(x-1) + fib(x-2);
+
+fib(10);
+
+operator binary: 1 (L R)
+    R;
+func fib2(x)
+    let a = 1, b = 1, c in (
+        while i < x let i = 3 do
+            c = a + b :
+            a = b :
+            b = c
+    ) : b;
+
+fib2(10);

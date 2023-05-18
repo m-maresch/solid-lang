@@ -11,16 +11,16 @@ class Expression {
 public:
     virtual ~Expression() = default;
 
-    virtual void Accept(ExpressionVisitor &visitor) = 0;
+    virtual void Accept(ExpressionVisitor &Visitor) = 0;
 };
 
 class VariableExpression : public Expression {
     std::string Name;
 
 public:
-    VariableExpression(std::string Name) : Name(std::move(Name)) {}
+    explicit VariableExpression(std::string Name) : Name(std::move(Name)) {}
 
-    void Accept(ExpressionVisitor &visitor) override;
+    void Accept(ExpressionVisitor &Visitor) override;
 
     std::string GetName() {
         return Name;
@@ -36,7 +36,7 @@ public:
                        std::unique_ptr<Expression> Body) : Variables(std::move(Variables)),
                                                            Body(std::move(Body)) {}
 
-    void Accept(ExpressionVisitor &visitor) override;
+    void Accept(ExpressionVisitor &Visitor) override;
 
     std::vector<std::pair<std::string, std::unique_ptr<Expression>>> &GetVariables() {
         return Variables;
@@ -55,7 +55,7 @@ public:
     FunctionCall(std::string Name, std::vector<std::unique_ptr<Expression>> Arguments)
             : Name(std::move(Name)), Arguments(std::move(Arguments)) {}
 
-    void Accept(ExpressionVisitor &visitor) override;
+    void Accept(ExpressionVisitor &Visitor) override;
 
     std::string GetName() {
         return Name;
@@ -74,7 +74,7 @@ public:
     FunctionDeclaration(std::string Name, std::vector<std::string> Arguments)
             : Name(std::move(Name)), Arguments(std::move(Arguments)) {}
 
-    void Accept(ExpressionVisitor &visitor) override;
+    void Accept(ExpressionVisitor &Visitor) override;
 
     std::string GetName() {
         return Name;
@@ -94,7 +94,7 @@ public:
                        std::unique_ptr<Expression> Implementation)
             : Declaration(std::move(Declaration)), Implementation(std::move(Implementation)) {}
 
-    void Accept(ExpressionVisitor &visitor) override;
+    void Accept(ExpressionVisitor &Visitor) override;
 
     std::unique_ptr<FunctionDeclaration> TakeDeclaration() {
         return std::move(Declaration);
@@ -113,9 +113,9 @@ public:
     UnaryExpression(char Operator, std::unique_ptr<Expression> Operand)
             : Operator(Operator), Operand(std::move(Operand)) {}
 
-    void Accept(ExpressionVisitor &visitor) override;
+    void Accept(ExpressionVisitor &Visitor) override;
 
-    char GetOperator() {
+    char GetOperator() const {
         return Operator;
     }
 
@@ -133,9 +133,9 @@ public:
     BinaryExpression(char Operator, std::unique_ptr<Expression> LeftSide, std::unique_ptr<Expression> RightSide)
             : Operator(Operator), LeftSide(std::move(LeftSide)), RightSide(std::move(RightSide)) {}
 
-    void Accept(ExpressionVisitor &visitor) override;
+    void Accept(ExpressionVisitor &Visitor) override;
 
-    char GetOperator() {
+    char GetOperator() const {
         return Operator;
     }
 
@@ -152,11 +152,11 @@ class NumExpression : public Expression {
     double Val;
 
 public:
-    NumExpression(double Val) : Val(Val) {}
+    explicit NumExpression(double Val) : Val(Val) {}
 
-    void Accept(ExpressionVisitor &visitor) override;
+    void Accept(ExpressionVisitor &Visitor) override;
 
-    double GetVal() {
+    double GetVal() const {
         return Val;
     }
 };
@@ -171,7 +171,7 @@ public:
                           std::unique_ptr<Expression> Otherwise)
             : Condition(std::move(Condition)), Then(std::move(Then)), Otherwise(std::move(Otherwise)) {}
 
-    void Accept(ExpressionVisitor &visitor) override;
+    void Accept(ExpressionVisitor &Visitor) override;
 
     Expression &GetCondition() {
         return *Condition;
@@ -200,7 +200,7 @@ public:
             : VariableName(std::move(VariableName)), Let(std::move(Let)), While(std::move(While)),
               Step(std::move(Step)), Body(std::move(Body)) {}
 
-    void Accept(ExpressionVisitor &visitor) override;
+    void Accept(ExpressionVisitor &Visitor) override;
 
     std::string GetVariableName() {
         return VariableName;
