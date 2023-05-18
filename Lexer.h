@@ -13,7 +13,7 @@ enum Token {
     t_then = -7,
     t_otherwise = -8,
     t_while = -9,
-    t_for = -10,
+    t_let = -10,
     t_in = -11,
     t_step = -12,
     t_do = -13,

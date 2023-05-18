@@ -19,7 +19,7 @@ std::unique_ptr<Expression> Parser::ParsePrimaryExpression() {
             return ParseConditionalExpression();
         case t_while:
             return ParseLoopExpression();
-        case t_for:
+        case t_let:
             return ParseVariableDefinition();
         default:
             return LogError<Expression>("unknown token while parsing expression");
@@ -117,7 +117,7 @@ std::unique_ptr<Expression> Parser::ParseConditionalExpression() {
     return std::make_unique<ConditionalExpression>(std::move(Condition), std::move(Then), std::move(Otherwise));
 }
 
-/// parse: 'while' expr 'for' id '=' expr ('step' expr)? 'do' expr
+/// parse: 'while' expr 'let' id '=' expr ('step' expr)? 'do' expr
 std::unique_ptr<Expression> Parser::ParseLoopExpression() {
     Lexer.GetNextToken(); // consume 'while'
 
@@ -126,9 +126,9 @@ std::unique_ptr<Expression> Parser::ParseLoopExpression() {
         return nullptr;
     }
 
-    if (Lexer.GetCurrentToken() != t_for)
-        return LogError<Expression>("expected 'for'");
-    Lexer.GetNextToken(); // consume 'for'
+    if (Lexer.GetCurrentToken() != t_let)
+        return LogError<Expression>("expected 'let'");
+    Lexer.GetNextToken(); // consume 'let'
 
     if (Lexer.GetCurrentToken() != t_id)
         return LogError<Expression>("expected id");
@@ -140,8 +140,8 @@ std::unique_ptr<Expression> Parser::ParseLoopExpression() {
         return LogError<Expression>("expected '='");
     Lexer.GetNextToken(); // consume '='
 
-    auto For = ParseExpression();
-    if (!For) {
+    auto Let = ParseExpression();
+    if (!Let) {
         return nullptr;
     }
 
@@ -164,12 +164,12 @@ std::unique_ptr<Expression> Parser::ParseLoopExpression() {
         return nullptr;
     }
 
-    return std::make_unique<LoopExpression>(Name, std::move(For), std::move(While), std::move(Step), std::move(Body));
+    return std::make_unique<LoopExpression>(Name, std::move(Let), std::move(While), std::move(Step), std::move(Body));
 }
 
-/// parse: 'for' id ('=' expr)? (',' id ('=' expr)?)* 'in' expr
+/// parse: 'let' id ('=' expr)? (',' id ('=' expr)?)* 'in' expr
 std::unique_ptr<Expression> Parser::ParseVariableDefinition() {
-    Lexer.GetNextToken(); // consume 'for'.
+    Lexer.GetNextToken(); // consume 'let'
 
     if (Lexer.GetCurrentToken() != t_id)
         return LogError<Expression>("expected id");

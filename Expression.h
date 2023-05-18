@@ -188,16 +188,16 @@ public:
 
 class LoopExpression : public Expression {
     std::string VariableName;
-    std::unique_ptr<Expression> For;
+    std::unique_ptr<Expression> Let;
     std::unique_ptr<Expression> While;
     std::unique_ptr<Expression> Step;
     std::unique_ptr<Expression> Body;
 
 public:
-    LoopExpression(std::string VariableName, std::unique_ptr<Expression> For,
+    LoopExpression(std::string VariableName, std::unique_ptr<Expression> Let,
                    std::unique_ptr<Expression> While, std::unique_ptr<Expression> Step,
                    std::unique_ptr<Expression> Body)
-            : VariableName(std::move(VariableName)), For(std::move(For)), While(std::move(While)),
+            : VariableName(std::move(VariableName)), Let(std::move(Let)), While(std::move(While)),
               Step(std::move(Step)), Body(std::move(Body)) {}
 
     void Accept(ExpressionVisitor &visitor) override;
@@ -206,8 +206,8 @@ public:
         return VariableName;
     }
 
-    Expression &GetFor() {
-        return *For;
+    Expression &GetLet() {
+        return *Let;
     }
 
     Expression &GetWhile() {

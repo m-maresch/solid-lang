@@ -42,7 +42,6 @@ int SolidLang::Start() {
 void SolidLang::ProcessInput() {
     bool done = false;
     while (!done) {
-        IfReplPrint("ready> ");
         switch (Lexer->GetCurrentToken()) {
             case t_eof:
                 done = true;
@@ -64,6 +63,7 @@ void SolidLang::ProcessInput() {
             default: {
                 std::unique_ptr<Expression> Result = Parser->ParseTopLevelExpression();
                 HandleTopLevelExpression(Result.get());
+                IfReplPrint("ready> ");
                 break;
             }
         }
@@ -137,7 +137,6 @@ int SolidLang::WriteObjectFile() {
 
 void SolidLang::HandleFunction(Expression *ParsedExpression) {
     if (ParsedExpression) {
-        IfReplPrint("Successfully parsed\n");
         ParsedExpression->Accept(*Visitor);
 
         if (IsRepl()) {
@@ -153,7 +152,6 @@ void SolidLang::HandleFunction(Expression *ParsedExpression) {
 
 void SolidLang::HandleNative(std::unique_ptr<FunctionDeclaration> Declaration) {
     if (Declaration) {
-        IfReplPrint("Successfully parsed\n");
         Declaration->Accept(*Visitor);
         Visitor->Register(std::move(Declaration));
     } else {
@@ -163,7 +161,6 @@ void SolidLang::HandleNative(std::unique_ptr<FunctionDeclaration> Declaration) {
 
 void SolidLang::HandleTopLevelExpression(Expression *ParsedExpression) {
     if (ParsedExpression) {
-        IfReplPrint("Successfully parsed\n");
         ParsedExpression->Accept(*Visitor);
 
         if (IsRepl()) {

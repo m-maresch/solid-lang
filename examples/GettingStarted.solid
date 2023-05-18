@@ -6,7 +6,7 @@ fib(10);
 
 native printc(x);
 func printstars(n)
-    while i < n for i = 1 step 1 do
+    while i < n let i = 1 step 1 do
         printc(42); # 42 = '*'
 
 printstars(100);
@@ -43,8 +43,8 @@ func printX123(x)
 printX123(10);
 
 func fib2(x)
-    for a = 1, b = 1, c in (
-        while i < x for i = 3 do
+    let a = 1, b = 1, c in (
+        while i < x let i = 3 do
             c = a + b :
             a = b :
             b = c

@@ -303,15 +303,15 @@ void IRGenerator::Visit(LoopExpression &expression) {
     Function *Func = Builder.GetInsertBlock()->getParent();
     AllocaInst *Alloca = CreateAlloca(Func, VariableName);
 
-    // emit for:
-    expression.GetFor().Accept(*this);
-    Value *For = Current;
-    if (!For) {
+    // emit let:
+    expression.GetLet().Accept(*this);
+    Value *Let = Current;
+    if (!Let) {
         Current = nullptr;
         return;
     }
 
-    Builder.CreateStore(For, Alloca);
+    Builder.CreateStore(Let, Alloca);
 
     BasicBlock *LoopBlock = BasicBlock::Create(Context, "loop", Func);
 

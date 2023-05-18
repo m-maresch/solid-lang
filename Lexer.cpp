@@ -28,8 +28,8 @@ int Lexer::GetToken() {
             return t_otherwise;
         else if (IdVal == "while")
             return t_while;
-        else if (IdVal == "for")
-            return t_for;
+        else if (IdVal == "let")
+            return t_let;
         else if (IdVal == "in")
             return t_in;
         else if (IdVal == "step")
