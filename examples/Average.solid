@@ -1,4 +1,2 @@
 func avg(x y)
     (x + y) * 0.5;
-
-avg(2,3);

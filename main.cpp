@@ -4,7 +4,7 @@ cl::OptionCategory Compiler("Compiler options");
 cl::opt<std::string> InputFile(cl::Positional, cl::desc("<input filename>"), cl::init("-"), cl::cat(Compiler));
 cl::opt<std::string> OutputFile("o", cl::desc("Output filename"), cl::value_desc("filename"), cl::init("-"),
                                 cl::cat(Compiler));
-cl::opt<bool> PrintIR("IR", cl::desc("Print generated LLVM IR"));
+cl::opt<bool> PrintIR("IR", cl::desc("Print generated LLVM IR"), cl::cat(Compiler));
 
 int main(int argc, char **argv) {
     cl::HideUnrelatedOptions(Compiler);

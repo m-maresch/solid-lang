@@ -11,7 +11,7 @@ double avg(double, double);
  * func avg(x y) (x + y) * 0.5;
  *
  * 2) Link this program to output.o:
- * clang++ link.cpp ../cmake-build-debug/output.o -o main
+ * clang++ link.cpp output.o -o main
  *
  * 3) Run it:
  * ./main
