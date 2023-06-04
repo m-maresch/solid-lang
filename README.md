@@ -11,7 +11,7 @@ The language supports:
 - Mutable, local variables (`let`)
 - Compilation to object files
 
-It is based on the "Kaleidoscope" language and the related documentation [here](https://llvm.org/docs/tutorial/MyFirstLanguageFrontend/index.html).
+It is based on the "Kaleidoscope" language and the related documentation [here](https://llvm.org/docs/tutorial/index.html).
 
 The `./examples` folder contains a few programs written in `solid`.
 
@@ -71,7 +71,7 @@ Generated LLVM IR:
 define double @__anonymous_top_level_expr() {
 entry:
   %calltmp = call double @a()
-  %addtmp = fadd double %calltmp, 4.000000e+00
+  %addtmp = fadd double 4.000000e+00, %calltmp
   ret double %addtmp
 }
 

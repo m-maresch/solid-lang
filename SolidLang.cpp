@@ -74,20 +74,23 @@ void SolidLang::ProcessInput() {
 void SolidLang::InitLLVM() {
     Context = std::make_unique<LLVMContext>();
     Module = std::make_unique<class Module>("Solid JIT", *Context);
-    Module->setDataLayout(JIT->getDataLayout());
+    Module->setDataLayout(JIT->GetDataLayout());
 
-    PassManager = std::make_unique<legacy::FunctionPassManager>(Module.get());
-    PassManager->add(createPromoteMemoryToRegisterPass());
-    PassManager->add(createInstructionCombiningPass());
-    PassManager->add(createReassociatePass());
-    PassManager->add(createGVNPass());
-    PassManager->add(createCFGSimplificationPass());
-    PassManager->doInitialization();
+    std::unique_ptr<legacy::FunctionPassManager> PassManager = nullptr;
+    if (!IsRepl()) {
+        PassManager = std::make_unique<legacy::FunctionPassManager>(Module.get());
+        PassManager->add(createPromoteMemoryToRegisterPass());
+        PassManager->add(createInstructionCombiningPass());
+        PassManager->add(createReassociatePass());
+        PassManager->add(createGVNPass());
+        PassManager->add(createCFGSimplificationPass());
+        PassManager->doInitialization();
+    }
 
     Builder = std::make_unique<IRBuilder<>>(*Context);
 
-    auto IRGenerator = std::make_unique<class IRGenerator>(*Context, *Builder, *Module, *PassManager, ValuesByName,
-                                                           FunctionDeclarations);
+    auto IRGenerator = std::make_unique<class IRGenerator>(*Context, *Builder, *Module, std::move(PassManager),
+                                                           ValuesByName, FunctionDeclarations);
 
     if (PrintIR) {
         Visitor = std::make_unique<class IRPrinter>(std::move(IRGenerator));
@@ -141,7 +144,7 @@ void SolidLang::HandleFunction(Expression *ParsedExpression) {
         ParsedExpression->Accept(*Visitor);
 
         if (IsRepl()) {
-            OnErrorExit(JIT->addModule(
+            OnErrorExit(JIT->AddModule(
                     ThreadSafeModule(std::move(Module), std::move(Context))
             ));
             InitLLVM();
@@ -165,15 +168,15 @@ void SolidLang::HandleTopLevelExpression(Expression *ParsedExpression) {
         ParsedExpression->Accept(*Visitor);
 
         if (IsRepl()) {
-            auto ResourceTracker = JIT->getMainJITDylib().createResourceTracker();
+            auto ResourceTracker = JIT->GetMain().createResourceTracker();
 
-            OnErrorExit(JIT->addModule(
+            OnErrorExit(JIT->AddModule(
                     ThreadSafeModule(std::move(Module), std::move(Context)),
                     ResourceTracker
             ));
             InitLLVM();
 
-            auto TopLevelExprSymbol = OnErrorExit(JIT->lookup("__anonymous_top_level_expr"));
+            auto TopLevelExprSymbol = OnErrorExit(JIT->Lookup("__anonymous_top_level_expr"));
             assert(TopLevelExprSymbol && "Top level expression not found");
 
             // Cast symbol's address to be able to call it as a native function (no arguments, returns double)

@@ -145,7 +145,9 @@ void IRGenerator::Visit(FunctionDefinition &Expression) {
 
         verifyFunction(*Func);
 
-        PassManager.run(*Func);
+        if (PassManager) {
+            PassManager->run(*Func);
+        }
 
         Current = Func;
         return;

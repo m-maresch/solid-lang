@@ -19,7 +19,7 @@ class IRGenerator : public ExpressionVisitor {
 
     Module &Module;
 
-    legacy::FunctionPassManager &PassManager;
+    std::unique_ptr<legacy::FunctionPassManager> PassManager;
 
     std::map<std::string, AllocaInst *> &ValuesByName;
 
@@ -33,10 +33,11 @@ class IRGenerator : public ExpressionVisitor {
 
 public:
     explicit IRGenerator(LLVMContext &Context, IRBuilder<> &Builder, class Module &Module,
-                         legacy::FunctionPassManager &PassManager, std::map<std::string, AllocaInst *> &ValuesByName,
+                         std::unique_ptr<legacy::FunctionPassManager> PassManager,
+                         std::map<std::string, AllocaInst *> &ValuesByName,
                          std::map<std::string, std::unique_ptr<FunctionDeclaration>> &FunctionDeclarations)
-            : Context(Context), Builder(Builder), Module(Module), PassManager(PassManager), ValuesByName(ValuesByName),
-              FunctionDeclarations(FunctionDeclarations) {}
+            : Context(Context), Builder(Builder), Module(Module), PassManager(std::move(PassManager)),
+              ValuesByName(ValuesByName), FunctionDeclarations(FunctionDeclarations) {}
 
     void Visit(VariableExpression &Expression) override;
 

@@ -43,7 +43,6 @@ private:
     std::unique_ptr<JIT> JIT;
     std::unique_ptr<LLVMContext> Context;
     std::unique_ptr<class Module> Module;
-    std::unique_ptr<legacy::FunctionPassManager> PassManager;
 
     std::unique_ptr<Lexer> Lexer;
     std::unique_ptr<Parser> Parser;
