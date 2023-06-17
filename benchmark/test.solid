@@ -1,0 +1,7 @@
+func fac(x)
+    when x < 2 then 1
+    otherwise x * fac(x - 1);
+
+func testSolid(n)
+    while i < n let i = 0 do
+        fac(i) + fac(i+1);
